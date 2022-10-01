@@ -11,44 +11,65 @@ fn index_to_coord(width: usize, index: usize) -> Coord {
     (index % width, index / width)
 }
 
-enum RegionKind {
-    White(Option<usize>),
+#[derive(Copy, Clone)]
+enum State {
+    Unknown,
+    White,
     Black,
+    Numbered(usize),
+}
+
+#[derive(Clone)]
+struct Cell {
+    state: State,
+    region: Option<Rc<Region>>,
 }
 
 struct Region {
-    kind: RegionKind,
-    cells: Vec<Coord>,
+    state: State,
+    /// Coordinates of cells in the region
+    coords: Vec<Coord>,
+    /// Coordinates of unknown cells on the frontier of the region
+    unknowns: Vec<Coord>,
 }
 
 struct Grid {
     width: usize,
     height: usize,
-    givens: Vec<(Coord, usize)>,
+    cells: Vec<Cell>,
     regions: Vec<Rc<Region>>,
-    regions_by_cell: Vec<Option<Rc<Region>>>,
 }
 
 impl Grid {
     fn new(width: usize, height: usize, givens: Vec<(Coord, usize)>) -> Self {
+        let mut cells = vec![
+            Cell {
+                state: State::Unknown,
+                region: None,
+            };
+            width * height
+        ];
         let mut regions = vec![];
-        let mut regions_by_cell = vec![None; width * height];
 
         for &(coord, given) in &givens {
+            let state = State::Numbered(given);
             let region_ptr = Rc::new(Region {
-                kind: RegionKind::White(Some(given)),
-                cells: vec![coord],
+                state,
+                coords: vec![coord],
+                unknowns: vec![], // TODO fill unknowns
             });
             regions.push(region_ptr.clone());
-            regions_by_cell[coord_to_index(width, coord)] = Some(region_ptr.clone());
+            cells[coord_to_index(width, coord)] = Cell {
+                state: State::Numbered(given),
+                region: Some(region_ptr.clone()),
+            };
         }
 
-        Self {
+        Grid {
             width,
             height,
-            givens,
+            cells,
             regions,
-            regions_by_cell,
         }
     }
 }
@@ -57,19 +78,16 @@ impl Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.height {
             for x in 0..self.width {
-                let index = coord_to_index(self.width, (x, y));
+                let cell = &self.cells[coord_to_index(self.width, (x, y))];
 
-                if let Some(region_ptr) = &self.regions_by_cell[index] {
-                    match region_ptr.kind {
-                        RegionKind::Black => write!(f, "{:3}", " ".on_black())?,
-                        RegionKind::White(None) => write!(f, "{:3}", " ".on_bright_white())?,
-                        RegionKind::White(Some(given)) => {
-                            write!(f, "{}", format!("{:^3}", given).on_bright_white())?
-                        }
+                match cell.state {
+                    State::Unknown => write!(f, "{:^3}", " ".on_white())?,
+                    State::White => write!(f, "{:3}", " ".on_bright_white())?,
+                    State::Black => write!(f, "{:3}", " ".on_black())?,
+                    State::Numbered(number) => {
+                        write!(f, "{}", format!("{:^3}", number).on_bright_white())?
                     }
-                } else {
-                    write!(f, "{:^3}", " ".on_white())?;
-                }
+                };
             }
 
             writeln!(f)?;
