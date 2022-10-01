@@ -11,6 +11,26 @@ fn index_to_coord(width: usize, index: usize) -> Coord {
     (index % width, index / width)
 }
 
+fn valid_neighbors(width: usize, height: usize, coord: Coord) -> Vec<Coord> {
+    let (x, y) = coord;
+    let mut neighbors = vec![];
+
+    if 0 < x {
+        neighbors.push((x - 1, y));
+    }
+    if x + 1 < width {
+        neighbors.push((x + 1, y));
+    }
+    if 0 < y {
+        neighbors.push((x, y - 1));
+    }
+    if y + 1 < height {
+        neighbors.push((x, y + 1));
+    }
+
+    neighbors
+}
+
 #[derive(Copy, Clone)]
 enum State {
     Unknown,
@@ -29,7 +49,7 @@ struct Region {
     state: State,
     /// Coordinates of cells in the region
     coords: Vec<Coord>,
-    /// Coordinates of unknown cells on the frontier of the region
+    /// Coordinates of unknown cells neighboring the region
     unknowns: Vec<Coord>,
 }
 
@@ -56,7 +76,7 @@ impl Grid {
             let region_ptr = Rc::new(Region {
                 state,
                 coords: vec![coord],
-                unknowns: vec![], // TODO fill unknowns
+                unknowns: valid_neighbors(width, height, coord),
             });
             regions.push(region_ptr.clone());
             cells[coord_to_index(width, coord)] = Cell {
@@ -71,6 +91,10 @@ impl Grid {
             cells,
             regions,
         }
+    }
+
+    fn valid_neighbors(&self, coord: Coord) -> Vec<Coord> {
+        valid_neighbors(self.width, self.height, coord)
     }
 }
 
