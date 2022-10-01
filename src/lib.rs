@@ -1,5 +1,5 @@
 use colored::*;
-use std::{fmt::Display, rc::Rc};
+use std::{fmt::Display, rc::Rc, cell::RefCell};
 
 type Coord = (usize, usize);
 
@@ -42,7 +42,7 @@ enum State {
 #[derive(Clone)]
 struct Cell {
     state: State,
-    region: Option<Rc<Region>>,
+    region: Option<Rc<RefCell<Region>>>,
 }
 
 struct Region {
@@ -57,7 +57,7 @@ struct Grid {
     width: usize,
     height: usize,
     cells: Vec<Cell>,
-    regions: Vec<Rc<Region>>,
+    regions: Vec<Rc<RefCell<Region>>>,
 }
 
 impl Grid {
@@ -73,11 +73,11 @@ impl Grid {
 
         for &(coord, given) in &givens {
             let state = State::Numbered(given);
-            let region_ptr = Rc::new(Region {
+            let region_ptr = Rc::new(RefCell::new(Region {
                 state,
                 coords: vec![coord],
                 unknowns: valid_neighbors(width, height, coord),
-            });
+            }));
             regions.push(region_ptr.clone());
             cells[coord_to_index(width, coord)] = Cell {
                 state: State::Numbered(given),
@@ -93,8 +93,28 @@ impl Grid {
         }
     }
 
+    fn coord_to_index(&self, coord: Coord) -> usize {
+        coord_to_index(self.width, coord)
+    }
+
     fn valid_neighbors(&self, coord: Coord) -> Vec<Coord> {
         valid_neighbors(self.width, self.height, coord)
+    }
+
+    fn analyze_complete_islands(&mut self) {
+        for region in &self.regions {
+            let state = region.borrow().state;
+
+            if let State::Numbered(number) = state {
+                if number == region.borrow().coords.len() {
+                    for coord in region.borrow_mut().unknowns.drain(..) {
+                        let index = self.coord_to_index(coord);
+                        // TODO: Remove marked cell from the unknowns of other regions
+                        self.cells[index].state = State::Black;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -127,18 +147,14 @@ mod tests {
 
     #[test]
     fn grid() {
-        let grid = Grid::new(
+        let mut grid = Grid::new(
             5,
             5,
             vec![((0, 0), 2), ((3, 0), 1), ((2, 1), 4), ((4, 2), 3)],
         );
         println!("{}", grid);
 
-        let grid = Grid::new(
-            5,
-            5,
-            vec![((3, 0), 6), ((4, 2), 3), ((2, 3), 2), ((1, 4), 2)],
-        );
+        grid.analyze_complete_islands();
         println!("{}", grid);
     }
 }
