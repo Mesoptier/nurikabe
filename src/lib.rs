@@ -4,6 +4,9 @@ use strategy::Strategy;
 
 pub mod strategy;
 
+#[cfg(test)]
+mod test_util;
+
 type Coord = (usize, usize);
 
 fn coord_to_index(width: usize, coord: Coord) -> usize {
@@ -34,12 +37,12 @@ fn valid_neighbors(width: usize, height: usize, coord: Coord) -> Vec<Coord> {
     neighbors
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 enum State {
-    Unknown,
+    Numbered(usize),
     White,
     Black,
-    Numbered(usize),
+    Unknown,
 }
 
 #[derive(Clone)]
