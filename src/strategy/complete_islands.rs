@@ -2,7 +2,7 @@ use super::Strategy;
 use crate::{Coord, Grid, State};
 use std::collections::HashSet;
 
-pub(crate) struct CompleteIslands;
+pub struct CompleteIslands;
 
 impl Strategy for CompleteIslands {
     fn apply(&self, grid: &mut Grid) -> bool {

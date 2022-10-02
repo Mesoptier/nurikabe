@@ -2,7 +2,7 @@ use colored::*;
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 use strategy::Strategy;
 
-mod strategy;
+pub mod strategy;
 
 type Coord = (usize, usize);
 
@@ -57,7 +57,7 @@ struct Region {
     unknowns: Vec<Coord>,
 }
 
-struct Grid {
+pub struct Grid {
     width: usize,
     height: usize,
     cells: Vec<Cell>,
@@ -66,7 +66,7 @@ struct Grid {
 }
 
 impl Grid {
-    fn new(width: usize, height: usize, givens: Vec<(Coord, usize)>) -> Self {
+    pub fn new(width: usize, height: usize, givens: Vec<(Coord, usize)>) -> Self {
         let mut cells = vec![
             Cell {
                 state: State::Unknown,
@@ -225,16 +225,16 @@ impl Display for Grid {
     }
 }
 
-pub(crate) struct Solver {
+pub struct Solver {
     strategies: Vec<Box<dyn Strategy>>,
 }
 
 impl Solver {
-    fn new(strategies: Vec<Box<dyn Strategy>>) -> Self {
+    pub fn new(strategies: Vec<Box<dyn Strategy>>) -> Self {
         Self { strategies }
     }
 
-    fn solve(&mut self, grid: &mut Grid) {
+    pub fn solve(&mut self, grid: &mut Grid) {
         while !grid.is_complete() {
             let mut result = false;
 
@@ -252,29 +252,5 @@ impl Solver {
 
             println!("{}", grid);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        strategy::{
-            complete_islands::CompleteIslands, single_liberties::SingleLiberties,
-        },
-        Grid, Solver,
-    };
-
-    #[test]
-    fn grid() {
-        let mut solver = Solver::new(vec![Box::new(CompleteIslands), Box::new(SingleLiberties)]);
-
-        let mut grid = Grid::new(
-            5,
-            5,
-            vec![((0, 0), 2), ((3, 0), 1), ((2, 1), 4), ((4, 2), 3)],
-        );
-        println!("{}", grid);
-
-        solver.solve(&mut grid);
     }
 }

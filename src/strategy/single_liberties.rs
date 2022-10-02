@@ -2,7 +2,7 @@ use super::Strategy;
 use crate::{Coord, Grid, State};
 use std::collections::HashSet;
 
-pub(crate) struct SingleLiberties;
+pub struct SingleLiberties;
 
 impl Strategy for SingleLiberties {
     fn apply(&self, grid: &mut Grid) -> bool {
