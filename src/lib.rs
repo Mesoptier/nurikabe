@@ -199,13 +199,15 @@ impl Display for Grid {
             for x in 0..self.width {
                 let cell = &self.cells[coord_to_index(self.width, (x, y))];
 
+                let string = match cell.state {
+                    State::Numbered(number) => format!("{:^3}", number),
+                    _ => format!("{:3}", ""),
+                };
+
                 match cell.state {
-                    State::Unknown => write!(f, "{:^3}", " ".on_white())?,
-                    State::White => write!(f, "{:3}", " ".on_bright_white())?,
-                    State::Black => write!(f, "{:3}", " ".on_black())?,
-                    State::Numbered(number) => {
-                        write!(f, "{}", format!("{:^3}", number).on_bright_white())?
-                    }
+                    State::Unknown => write!(f, "{}", string.on_white())?,
+                    State::White | State::Numbered(_) => write!(f, "{}", string.on_bright_white())?,
+                    State::Black => write!(f, "{}", string.on_black())?,
                 };
             }
 
