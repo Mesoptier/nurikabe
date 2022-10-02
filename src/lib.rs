@@ -198,7 +198,11 @@ impl Grid {
 
     fn is_complete(&self) -> bool {
         let total_cells = self.width * self.height;
-        let marked_cells = self.regions.iter().map(|region| region.borrow().coords.len()).sum::<usize>();
+        let marked_cells = self
+            .regions
+            .iter()
+            .map(|region| region.borrow().coords.len())
+            .sum::<usize>();
         total_cells == marked_cells
     }
 }
