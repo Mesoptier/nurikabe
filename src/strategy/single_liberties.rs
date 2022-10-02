@@ -5,7 +5,7 @@ use std::collections::HashSet;
 pub(crate) struct SingleLiberties;
 
 impl Strategy for SingleLiberties {
-    fn apply(&self, grid: &mut Grid) {
+    fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
         let mut mark_as_white = HashSet::<Coord>::new();
 
@@ -29,11 +29,15 @@ impl Strategy for SingleLiberties {
             }
         }
 
+        let result = !mark_as_black.is_empty() || !mark_as_white.is_empty();
+
         for coord in mark_as_black {
             grid.mark_cell(coord, State::Black);
         }
         for coord in mark_as_white {
             grid.mark_cell(coord, State::White);
         }
+
+        result
     }
 }

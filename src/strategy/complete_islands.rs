@@ -5,7 +5,7 @@ use std::collections::HashSet;
 pub(crate) struct CompleteIslands;
 
 impl Strategy for CompleteIslands {
-    fn apply(&self, grid: &mut Grid) {
+    fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
 
         for region_ptr in &grid.regions {
@@ -17,8 +17,12 @@ impl Strategy for CompleteIslands {
             }
         }
 
+        let result = !mark_as_black.is_empty();
+
         for coord in mark_as_black {
             grid.mark_cell(coord, State::Black);
         }
+
+        result
     }
 }

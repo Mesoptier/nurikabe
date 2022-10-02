@@ -1,5 +1,6 @@
 use colored::*;
 use std::{cell::RefCell, fmt::Display, rc::Rc};
+use strategy::Strategy;
 
 mod strategy;
 
@@ -191,6 +192,12 @@ impl Grid {
         self.regions.retain(|r| !Rc::ptr_eq(r, &r2));
         assert_eq!(Rc::strong_count(&r2), 1);
     }
+
+    fn is_complete(&self) -> bool {
+        let total_cells = self.width * self.height;
+        let marked_cells = self.regions.iter().map(|region| region.borrow().coords.len()).sum::<usize>();
+        total_cells == marked_cells
+    }
 }
 
 impl Display for Grid {
@@ -218,17 +225,49 @@ impl Display for Grid {
     }
 }
 
+pub(crate) struct Solver {
+    strategies: Vec<Box<dyn Strategy>>,
+}
+
+impl Solver {
+    fn new(strategies: Vec<Box<dyn Strategy>>) -> Self {
+        Self { strategies }
+    }
+
+    fn solve(&mut self, grid: &mut Grid) {
+        while !grid.is_complete() {
+            let mut result = false;
+
+            for strategy in &self.strategies {
+                result = strategy.apply(grid);
+                if result {
+                    break;
+                }
+            }
+
+            if !result {
+                eprintln!("no strategy applies");
+                break;
+            }
+
+            println!("{}", grid);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
         strategy::{
-            complete_islands::CompleteIslands, single_liberties::SingleLiberties, Strategy,
+            complete_islands::CompleteIslands, single_liberties::SingleLiberties,
         },
-        Grid,
+        Grid, Solver,
     };
 
     #[test]
     fn grid() {
+        let mut solver = Solver::new(vec![Box::new(CompleteIslands), Box::new(SingleLiberties)]);
+
         let mut grid = Grid::new(
             5,
             5,
@@ -236,42 +275,6 @@ mod tests {
         );
         println!("{}", grid);
 
-        let complete_islands = CompleteIslands;
-        let single_liberties = SingleLiberties;
-
-        complete_islands.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        complete_islands.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        complete_islands.apply(&mut grid);
-        println!("{}", grid);
-
-        single_liberties.apply(&mut grid);
-        println!("{}", grid);
-
-        println!("{:#?}", grid.regions);
+        solver.solve(&mut grid);
     }
 }
