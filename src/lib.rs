@@ -1,5 +1,7 @@
 use colored::*;
-use std::{cell::RefCell, collections::HashSet, fmt::Display, rc::Rc};
+use std::{cell::RefCell, fmt::Display, rc::Rc};
+
+mod strategy;
 
 type Coord = (usize, usize);
 
@@ -141,7 +143,10 @@ impl Grid {
             if let Some(adjacent_region_ptr) = self.cells[adjacent_index].region.clone() {
                 // Remove cell from the unknowns of all adjacent regions
                 // TODO: Performance can probably be improved slightly by using .swap_remove()
-                adjacent_region_ptr.borrow_mut().unknowns.retain(|&unknown| unknown != coord);
+                adjacent_region_ptr
+                    .borrow_mut()
+                    .unknowns
+                    .retain(|&unknown| unknown != coord);
 
                 // Add cell to adjacent regions with equivalent state, potentially fusing some regions
                 // TODO: Make sure that this equivalence check is correct
@@ -151,7 +156,10 @@ impl Grid {
                     State::Black => state == State::Black,
                 };
                 if is_adjacent_state_equivalent {
-                    self.fuse_regions(adjacent_region_ptr, self.cells[index].region.clone().unwrap());
+                    self.fuse_regions(
+                        adjacent_region_ptr,
+                        self.cells[index].region.clone().unwrap(),
+                    );
                 }
             }
         }
@@ -183,55 +191,6 @@ impl Grid {
         self.regions.retain(|r| !Rc::ptr_eq(r, &r2));
         assert_eq!(Rc::strong_count(&r2), 1);
     }
-
-    fn analyze_complete_islands(&mut self) {
-        let mut mark_as_black = HashSet::<Coord>::new();
-
-        for region_ptr in &self.regions {
-            let region = region_ptr.borrow();
-            if let State::Numbered(number) = region.state {
-                if number == region.coords.len() {
-                    mark_as_black.extend(region.unknowns.iter());
-                }
-            }
-        }
-
-        for coord in mark_as_black {
-            self.mark_cell(coord, State::Black);
-        }
-    }
-
-    fn analyze_single_liberties(&mut self) {
-        let mut mark_as_black = HashSet::<Coord>::new();
-        let mut mark_as_white = HashSet::<Coord>::new();
-
-        for region_ptr in &self.regions {
-            let region = region_ptr.borrow();
-
-            let is_region_complete = match region.state {
-                State::Unknown => unreachable!(),
-                State::White => false,
-                State::Black => region.coords.len() == self.total_black_cells,
-                State::Numbered(number) => region.coords.len() == number,
-            };
-
-            if !is_region_complete && region.unknowns.len() == 1 {
-                let unknown_coord = region.unknowns[0];
-                match region.state {
-                    State::Unknown => unreachable!(),
-                    State::White | State::Numbered(_) => mark_as_white.insert(unknown_coord),
-                    State::Black => mark_as_black.insert(unknown_coord),
-                };
-            }
-        }
-
-        for coord in mark_as_black {
-            self.mark_cell(coord, State::Black);
-        }
-        for coord in mark_as_white {
-            self.mark_cell(coord, State::White);
-        }
-    }
 }
 
 impl Display for Grid {
@@ -259,7 +218,12 @@ impl Display for Grid {
 
 #[cfg(test)]
 mod tests {
-    use crate::Grid;
+    use crate::{
+        strategy::{
+            complete_islands::CompleteIslands, single_liberties::SingleLiberties, Strategy,
+        },
+        Grid,
+    };
 
     #[test]
     fn grid() {
@@ -270,37 +234,40 @@ mod tests {
         );
         println!("{}", grid);
 
-        grid.analyze_complete_islands();
+        let complete_islands = CompleteIslands;
+        let single_liberties = SingleLiberties;
+
+        complete_islands.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_complete_islands();
+        complete_islands.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_complete_islands();
+        complete_islands.apply(&mut grid);
         println!("{}", grid);
 
-        grid.analyze_single_liberties();
+        single_liberties.apply(&mut grid);
         println!("{}", grid);
 
         println!("{:#?}", grid.regions);
