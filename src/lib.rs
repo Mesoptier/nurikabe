@@ -1,5 +1,5 @@
 use colored::*;
-use std::{fmt::Display, rc::Rc, cell::RefCell};
+use std::{cell::RefCell, fmt::Display, rc::Rc, collections::HashSet};
 
 type Coord = (usize, usize);
 
@@ -31,7 +31,7 @@ fn valid_neighbors(width: usize, height: usize, coord: Coord) -> Vec<Coord> {
     neighbors
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum State {
     Unknown,
     White,
@@ -101,19 +101,62 @@ impl Grid {
         valid_neighbors(self.width, self.height, coord)
     }
 
-    fn analyze_complete_islands(&mut self) {
-        for region in &self.regions {
-            let state = region.borrow().state;
+    fn valid_unknown_neighbors(&self, coord: Coord) -> Vec<Coord> {
+        let mut neighbors = self.valid_neighbors(coord);
+        neighbors.retain(|&coord| self.cells[self.coord_to_index(coord)].state == State::Unknown);
+        neighbors
+    }
 
-            if let State::Numbered(number) = state {
-                if number == region.borrow().coords.len() {
-                    for coord in region.borrow_mut().unknowns.drain(..) {
-                        let index = self.coord_to_index(coord);
-                        // TODO: Remove marked cell from the unknowns of other regions
-                        self.cells[index].state = State::Black;
-                    }
+    fn mark_cell(&mut self, coord: Coord, state: State) {
+        let index = self.coord_to_index(coord);
+
+        // TODO: Return Result:Err instead of panicking when contradiction occurs
+        assert_eq!(self.cells[index].state, State::Unknown);
+
+        // Create new region containing only the given cell
+        let region = Rc::new(RefCell::new(Region {
+            state,
+            coords: vec![coord],
+            unknowns: self.valid_unknown_neighbors(coord),
+        }));
+        self.regions.push(region.clone());
+
+        // Mark the given cell, and link it to the new region
+        self.cells[index].state = state;
+        self.cells[index].region = Some(region.clone());
+
+        // Update adjacent regions
+        for adjacent_coord in self.valid_neighbors(coord) {
+            let adjacent_index = self.coord_to_index(adjacent_coord);
+            let adjacent_cell = &self.cells[adjacent_index];
+
+            if let Some(adjacent_region_ptr) = &adjacent_cell.region {
+                let mut adjacent_region = adjacent_region_ptr.borrow_mut();
+
+                // Remove cell from the unknowns of all adjacent regions
+                // TODO: Performance can probably be improved slightly by using .swap_remove()
+                adjacent_region.unknowns.retain(|&unknown| unknown != coord);
+
+                // TODO: Add cell to adjacent regions with equivalent state, potentially fusing some regions
+            }
+
+        }
+    }
+
+    fn analyze_complete_islands(&mut self) {
+        let mut mark_as_black = HashSet::<Coord>::new();
+
+        for region_ptr in &self.regions {
+            let region = region_ptr.borrow();
+            if let State::Numbered(number) = region.state {
+                if number == region.coords.len() {
+                    mark_as_black.extend(region.unknowns.iter());
                 }
             }
+        }
+
+        for coord in mark_as_black {
+            self.mark_cell(coord, State::Black);
         }
     }
 }
