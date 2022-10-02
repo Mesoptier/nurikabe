@@ -221,7 +221,7 @@ impl Display for Grid {
                 };
             }
 
-            writeln!(f)?;
+            writeln!(f, " ")?;
         }
 
         Ok(())
