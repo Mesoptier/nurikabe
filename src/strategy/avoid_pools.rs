@@ -9,7 +9,7 @@ impl Strategy for AvoidPools {
         let mut mark_as_white = HashSet::<Coord>::new();
 
         for x in 1..grid.width {
-            for y in 1..grid.width {
+            for y in 1..grid.height {
                 let mut black_cells = vec![];
                 let mut unknown_cells = vec![];
 
