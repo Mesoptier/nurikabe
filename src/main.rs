@@ -1,7 +1,7 @@
 use nurikabe::{
     strategy::{
-        complete_islands::CompleteIslands, single_liberties::SingleLiberties,
-        unreachable_cells::UnreachableCells,
+        avoid_pools::AvoidPools, complete_islands::CompleteIslands,
+        single_liberties::SingleLiberties, unreachable_cells::UnreachableCells,
     },
     Grid, Solver,
 };
@@ -10,6 +10,7 @@ fn main() {
     let mut solver = Solver::new(vec![
         Box::new(CompleteIslands),
         Box::new(SingleLiberties),
+        Box::new(AvoidPools),
         Box::new(UnreachableCells),
     ]);
 
