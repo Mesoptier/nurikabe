@@ -14,18 +14,12 @@ fn main() {
         Box::new(UnreachableCells),
     ]);
 
-    //    let mut grid = Grid::new(
-    //        5,
-    //        5,
-    //        vec![((0, 0), 2), ((3, 0), 1), ((2, 1), 4), ((4, 2), 3)],
-    //    );
-    //    println!("{}", grid);
-    //    solver.solve(&mut grid);
-
+    // https://www.puzzle-nurikabe.com/
+    // 5x5 Nurikabe Hard Puzzle ID: 9,690,008
     let mut grid = Grid::new(
         5,
         5,
-        vec![((3, 0), 1), ((1, 2), 2), ((3, 2), 2), ((0, 3), 3)],
+        vec![((0, 0), 2), ((3, 0), 1), ((3, 2), 3), ((4, 3), 5)],
     );
     println!("{}", grid);
     solver.solve(&mut grid);
