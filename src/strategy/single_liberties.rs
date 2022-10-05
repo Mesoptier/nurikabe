@@ -5,6 +5,8 @@ use std::collections::HashSet;
 pub struct SingleLiberties;
 
 impl Strategy for SingleLiberties {
+    fn name(&self) -> &str { "SingleLiberties" }
+
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
         let mut mark_as_white = HashSet::<Coord>::new();

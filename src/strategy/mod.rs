@@ -6,5 +6,6 @@ pub mod single_liberties;
 pub mod unreachable_cells;
 
 pub trait Strategy {
+    fn name(&self) -> &str;
     fn apply(&self, grid: &mut Grid) -> bool;
 }

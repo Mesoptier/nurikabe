@@ -5,6 +5,8 @@ use std::collections::HashSet;
 pub struct AvoidPools;
 
 impl Strategy for AvoidPools {
+    fn name(&self) -> &str { "AvoidPools" }
+
     fn apply(&self, grid: &mut crate::Grid) -> bool {
         let mut mark_as_white = HashSet::<Coord>::new();
 

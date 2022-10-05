@@ -249,6 +249,7 @@ impl Solver {
             for strategy in &self.strategies {
                 result = strategy.apply(grid);
                 if result {
+                    eprintln!("applying strategy {}", strategy.name());
                     break;
                 }
             }

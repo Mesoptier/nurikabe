@@ -5,6 +5,8 @@ use std::collections::HashSet;
 pub struct CompleteIslands;
 
 impl Strategy for CompleteIslands {
+    fn name(&self) -> &str { "CompleteIslands" }
+
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
 
