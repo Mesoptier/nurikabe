@@ -107,7 +107,9 @@ impl UnreachableCells {
 }
 
 impl Strategy for UnreachableCells {
-    fn name(&self) -> &str { "UnreachableCells" }
+    fn name(&self) -> &str {
+        "UnreachableCells"
+    }
 
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();

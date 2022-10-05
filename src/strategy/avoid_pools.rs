@@ -5,7 +5,9 @@ use std::collections::HashSet;
 pub struct AvoidPools;
 
 impl Strategy for AvoidPools {
-    fn name(&self) -> &str { "AvoidPools" }
+    fn name(&self) -> &str {
+        "AvoidPools"
+    }
 
     fn apply(&self, grid: &mut crate::Grid) -> bool {
         let mut mark_as_white = HashSet::<Coord>::new();
@@ -21,7 +23,7 @@ impl Strategy for AvoidPools {
                     match grid.cells[index].state {
                         State::Black => black_cells.push(coord),
                         State::Unknown => unknown_cells.push(coord),
-                        _ => {},
+                        _ => {}
                     };
                 }
 
