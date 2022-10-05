@@ -2,6 +2,7 @@ use colored::*;
 use std::{cell::RefCell, fmt::Display, rc::Rc};
 use strategy::Strategy;
 
+pub mod grid_from_str;
 pub mod strategy;
 
 #[cfg(test)]

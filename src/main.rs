@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use nurikabe::{
     strategy::{
         avoid_pools::AvoidPools, complete_islands::CompleteIslands,
@@ -16,11 +18,7 @@ fn main() {
 
     // https://www.puzzle-nurikabe.com/
     // 5x5 Nurikabe Hard Puzzle ID: 9,690,008
-    let mut grid = Grid::new(
-        5,
-        5,
-        vec![((0, 0), 2), ((3, 0), 1), ((3, 2), 3), ((4, 3), 5)],
-    );
+    let mut grid = Grid::from_str("2..1./...../...3./....5/.....").unwrap();
     println!("{}", grid);
     solver.solve(&mut grid);
 }
