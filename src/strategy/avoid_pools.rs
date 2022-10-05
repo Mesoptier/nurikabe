@@ -26,6 +26,9 @@ impl Strategy for AvoidPools {
                 if black_cells.len() == 3 && unknown_cells.len() == 1 {
                     mark_as_white.insert(unknown_cells[0]);
                 }
+
+                // TODO: in cases with 2 black cells and 2 unknown cells, we
+                //  might want to try both unknown cells for unreachability.
             }
         }
 
