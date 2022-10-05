@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use nurikabe::{
     strategy::{
-        avoid_pools::AvoidPools, complete_islands::CompleteIslands,
+        avoid_pools::AvoidPools, complete_islands::CompleteIslands, dual_liberties::DualLiberties,
         single_liberties::SingleLiberties, unreachable_cells::UnreachableCells,
     },
     Grid, Solver,
@@ -12,6 +12,7 @@ fn main() {
     let mut solver = Solver::new(vec![
         Box::new(CompleteIslands),
         Box::new(SingleLiberties),
+        Box::new(DualLiberties),
         Box::new(AvoidPools),
         Box::new(UnreachableCells),
     ]);
