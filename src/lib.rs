@@ -1,5 +1,9 @@
+#[cfg(feature = "display")]
 use colored::*;
-use std::{cell::RefCell, fmt::Display, rc::Rc};
+#[cfg(feature = "display")]
+use std::fmt::Display;
+use std::{cell::RefCell, rc::Rc};
+
 use strategy::Strategy;
 
 pub mod grid_from_str;
@@ -204,6 +208,7 @@ impl Grid {
     }
 }
 
+#[cfg(feature = "display")]
 impl Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.height {
@@ -245,16 +250,19 @@ impl Solver {
             for strategy in &self.strategies {
                 result = strategy.apply(grid);
                 if result {
+                    #[cfg(feature = "display")]
                     eprintln!("applying strategy {}", strategy.name());
                     break;
                 }
             }
 
             if !result {
+                #[cfg(feature = "display")]
                 eprintln!("no strategy applies");
                 break;
             }
 
+            #[cfg(feature = "display")]
             println!("{}", grid);
         }
     }
