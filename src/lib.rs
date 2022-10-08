@@ -14,10 +14,6 @@ fn coord_to_index(width: usize, coord: Coord) -> usize {
     coord.0 + coord.1 * width
 }
 
-fn index_to_coord(width: usize, index: usize) -> Coord {
-    (index % width, index / width)
-}
-
 fn valid_neighbors(width: usize, height: usize, coord: Coord) -> Vec<Coord> {
     let (x, y) = coord;
     let mut neighbors = vec![];
