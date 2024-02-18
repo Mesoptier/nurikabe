@@ -77,6 +77,7 @@ impl Grid {
             let region_ptr = Rc::new(RefCell::new(Region {
                 state,
                 coords: vec![coord],
+                // Note: All neighbors are unknown at this point, otherwise the input would be invalid.
                 unknowns: Self::static_valid_neighbors(num_cols, num_rows, coord).collect(),
             }));
             regions.push(region_ptr.clone());
