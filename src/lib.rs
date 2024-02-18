@@ -38,6 +38,15 @@ struct Cell {
     region: Option<Rc<RefCell<Region>>>,
 }
 
+impl Default for Cell {
+    fn default() -> Self {
+        Self {
+            state: State::Unknown,
+            region: None,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Region {
     state: State,
@@ -61,13 +70,7 @@ impl Grid {
         num_cols: usize,
         givens: impl IntoIterator<Item = (Coord, usize)>,
     ) -> Self {
-        let mut cells = vec![
-            Cell {
-                state: State::Unknown,
-                region: None,
-            };
-            num_cols * num_rows
-        ];
+        let mut cells = vec![Default::default(); num_cols * num_rows];
         let mut regions = vec![];
 
         let mut total_white_cells = 0;
