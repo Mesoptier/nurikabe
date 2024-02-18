@@ -1,7 +1,3 @@
-#[cfg(feature = "display")]
-use colored::*;
-#[cfg(feature = "display")]
-use std::fmt::Display;
 use std::{cell::RefCell, rc::Rc};
 
 use strategy::Strategy;
@@ -237,28 +233,68 @@ impl Grid {
 }
 
 #[cfg(feature = "display")]
-impl Display for Grid {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for row in 0..self.num_rows {
-            for col in 0..self.num_cols {
-                let cell = self.cell(Coord::new(row, col));
+mod display {
+    use crate::{Coord, Grid, State};
+    use colored::Colorize;
+    use std::fmt::{Display, Formatter};
 
-                let string = match cell.state {
-                    State::Numbered(number) => format!("{:^3}", number),
-                    _ => format!("{:3}", ""),
-                };
+    impl Display for Grid {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            GridDiff {
+                grid: self,
+                prev_states: &[],
+            }
+            .fmt(f)
+        }
+    }
 
-                match cell.state {
-                    State::Unknown => write!(f, "{}", string.on_white())?,
-                    State::White | State::Numbered(_) => write!(f, "{}", string.on_bright_white())?,
-                    State::Black => write!(f, "{}", string.on_black())?,
-                };
+    impl Grid {
+        pub(super) fn diff<'a>(&'a self, prev_states: &'a [State]) -> GridDiff<'a> {
+            assert_eq!(prev_states.len(), self.cells.len());
+            GridDiff {
+                grid: self,
+                prev_states,
+            }
+        }
+    }
+
+    pub(super) struct GridDiff<'a> {
+        grid: &'a Grid,
+        prev_states: &'a [State],
+    }
+
+    impl<'a> Display for GridDiff<'a> {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            for row in 0..self.grid.num_rows {
+                for col in 0..self.grid.num_cols {
+                    let state = self.grid.cell(Coord::new(row, col)).state;
+                    let prev_state = self
+                        .prev_states
+                        .get(self.grid.coord_to_index(Coord::new(row, col)))
+                        .copied();
+
+                    let string = match (state, prev_state) {
+                        (State::Numbered(number), _) => format!("{:^3}", number),
+                        (state, Some(prev_state)) if state != prev_state => {
+                            format!("{:^3}", "*".bright_red())
+                        }
+                        _ => format!("{:3}", ""),
+                    };
+
+                    match state {
+                        State::Unknown => write!(f, "{}", string.on_white())?,
+                        State::White | State::Numbered(_) => {
+                            write!(f, "{}", string.on_bright_white())?
+                        }
+                        State::Black => write!(f, "{}", string.on_black())?,
+                    };
+                }
+
+                writeln!(f, " ")?;
             }
 
-            writeln!(f, " ")?;
+            Ok(())
         }
-
-        Ok(())
     }
 }
 
@@ -274,6 +310,9 @@ impl Solver {
     pub fn solve(&mut self, grid: &mut Grid) {
         while !grid.is_complete() {
             let mut result = false;
+
+            #[cfg(feature = "display")]
+            let prev_states = grid.cells.iter().map(|cell| cell.state).collect::<Vec<_>>();
 
             for strategy in &self.strategies {
                 result = strategy.apply(grid);
@@ -291,7 +330,7 @@ impl Solver {
             }
 
             #[cfg(feature = "display")]
-            println!("{}", grid);
+            println!("{}", grid.diff(&prev_states));
         }
     }
 }
