@@ -12,30 +12,16 @@ pub mod strategy;
 #[cfg(test)]
 mod test_util;
 
-type Coord = (usize, usize);
-
-fn coord_to_index(width: usize, coord: Coord) -> usize {
-    coord.0 + coord.1 * width
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub struct Coord {
+    row: usize,
+    col: usize,
 }
 
-fn valid_neighbors(width: usize, height: usize, coord: Coord) -> Vec<Coord> {
-    let (x, y) = coord;
-    let mut neighbors = vec![];
-
-    if 0 < x {
-        neighbors.push((x - 1, y));
+impl Coord {
+    pub fn new(row: usize, col: usize) -> Self {
+        Self { row, col }
     }
-    if x + 1 < width {
-        neighbors.push((x + 1, y));
-    }
-    if 0 < y {
-        neighbors.push((x, y - 1));
-    }
-    if y + 1 < height {
-        neighbors.push((x, y + 1));
-    }
-
-    neighbors
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -62,8 +48,8 @@ struct Region {
 }
 
 pub struct Grid {
-    width: usize,
-    height: usize,
+    num_rows: usize,
+    num_cols: usize,
     cells: Box<[Cell]>,
     regions: Vec<Rc<RefCell<Region>>>,
     total_black_cells: usize,
@@ -71,8 +57,8 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(
-        width: usize,
-        height: usize,
+        num_rows: usize,
+        num_cols: usize,
         givens: impl IntoIterator<Item = (Coord, usize)>,
     ) -> Self {
         let mut cells = vec![
@@ -80,7 +66,7 @@ impl Grid {
                 state: State::Unknown,
                 region: None,
             };
-            width * height
+            num_cols * num_rows
         ];
         let mut regions = vec![];
 
@@ -91,10 +77,10 @@ impl Grid {
             let region_ptr = Rc::new(RefCell::new(Region {
                 state,
                 coords: vec![coord],
-                unknowns: valid_neighbors(width, height, coord),
+                unknowns: Self::static_valid_neighbors(num_cols, num_rows, coord).collect(),
             }));
             regions.push(region_ptr.clone());
-            cells[coord_to_index(width, coord)] = Cell {
+            cells[Self::static_coord_to_index(num_cols, coord)] = Cell {
                 state: State::Numbered(given),
                 region: Some(region_ptr.clone()),
             };
@@ -103,26 +89,60 @@ impl Grid {
         }
 
         Grid {
-            width,
-            height,
+            num_cols,
+            num_rows,
             cells: cells.into_boxed_slice(),
             regions,
-            total_black_cells: width * height - total_white_cells,
+            total_black_cells: num_cols * num_rows - total_white_cells,
         }
     }
 
+    fn static_coord_to_index(width: usize, coord: Coord) -> usize {
+        coord.row * width + coord.col
+    }
+
     fn coord_to_index(&self, coord: Coord) -> usize {
-        coord_to_index(self.width, coord)
+        Self::static_coord_to_index(self.num_cols, coord)
     }
 
-    fn valid_neighbors(&self, coord: Coord) -> Vec<Coord> {
-        valid_neighbors(self.width, self.height, coord)
+    fn static_valid_neighbors(
+        width: usize,
+        height: usize,
+        coord: Coord,
+    ) -> impl Iterator<Item = Coord> {
+        let width = width as isize;
+        let height = height as isize;
+
+        [
+            (coord.row as isize - 1, coord.col as isize),
+            (coord.row as isize + 1, coord.col as isize),
+            (coord.row as isize, coord.col as isize - 1),
+            (coord.row as isize, coord.col as isize + 1),
+        ]
+        .into_iter()
+        .filter_map(move |(row, col)| {
+            if row >= 0 && row < height && col >= 0 && col < width {
+                Some(Coord {
+                    row: row as usize,
+                    col: col as usize,
+                })
+            } else {
+                None
+            }
+        })
     }
 
-    fn valid_unknown_neighbors(&self, coord: Coord) -> Vec<Coord> {
-        let mut neighbors = self.valid_neighbors(coord);
-        neighbors.retain(|&coord| self.cells[self.coord_to_index(coord)].state == State::Unknown);
-        neighbors
+    fn valid_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> {
+        Self::static_valid_neighbors(self.num_cols, self.num_rows, coord)
+    }
+
+    fn valid_unknown_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> + '_ {
+        self.valid_neighbors(coord)
+            .filter(move |&coord| self.cell(coord).state == State::Unknown)
+    }
+
+    fn cell(&self, coord: Coord) -> &Cell {
+        &self.cells[self.coord_to_index(coord)]
     }
 
     fn mark_cell(&mut self, coord: Coord, state: State) {
@@ -136,7 +156,7 @@ impl Grid {
             let region = Rc::new(RefCell::new(Region {
                 state,
                 coords: vec![coord],
-                unknowns: self.valid_unknown_neighbors(coord),
+                unknowns: self.valid_unknown_neighbors(coord).collect(),
             }));
             self.regions.push(region.clone());
 
@@ -202,7 +222,7 @@ impl Grid {
     }
 
     fn is_complete(&self) -> bool {
-        let total_cells = self.width * self.height;
+        let total_cells = self.num_cols * self.num_rows;
         let marked_cells = self
             .regions
             .iter()
@@ -215,9 +235,9 @@ impl Grid {
 #[cfg(feature = "display")]
 impl Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let cell = &self.cells[coord_to_index(self.width, (x, y))];
+        for row in 0..self.num_rows {
+            for col in 0..self.num_cols {
+                let cell = self.cell(Coord::new(row, col));
 
                 let string = match cell.state {
                     State::Numbered(number) => format!("{:^3}", number),

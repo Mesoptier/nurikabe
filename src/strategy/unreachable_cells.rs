@@ -114,11 +114,11 @@ impl Strategy for UnreachableCells {
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
 
-        for x in 0..grid.width {
-            for y in 0..grid.height {
+        for col in 0..grid.num_cols {
+            for row in 0..grid.num_rows {
                 // TODO: Pass mark_as_black to is_cell_unreachable() to avoid revisiting those cells in the BFS
-                if self.is_cell_unreachable(grid, (x, y)) {
-                    mark_as_black.insert((x, y));
+                if self.is_cell_unreachable(grid, Coord::new(row, col)) {
+                    mark_as_black.insert(Coord::new(row, col));
                 }
             }
         }
