@@ -64,13 +64,17 @@ struct Region {
 pub struct Grid {
     width: usize,
     height: usize,
-    cells: Vec<Cell>,
+    cells: Box<[Cell]>,
     regions: Vec<Rc<RefCell<Region>>>,
     total_black_cells: usize,
 }
 
 impl Grid {
-    pub fn new(width: usize, height: usize, givens: Vec<(Coord, usize)>) -> Self {
+    pub fn new(
+        width: usize,
+        height: usize,
+        givens: impl IntoIterator<Item = (Coord, usize)>,
+    ) -> Self {
         let mut cells = vec![
             Cell {
                 state: State::Unknown,
@@ -82,7 +86,7 @@ impl Grid {
 
         let mut total_white_cells = 0;
 
-        for &(coord, given) in &givens {
+        for (coord, given) in givens {
             let state = State::Numbered(given);
             let region_ptr = Rc::new(RefCell::new(Region {
                 state,
@@ -101,7 +105,7 @@ impl Grid {
         Grid {
             width,
             height,
-            cells,
+            cells: cells.into_boxed_slice(),
             regions,
             total_black_cells: width * height - total_white_cells,
         }
