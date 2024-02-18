@@ -85,7 +85,7 @@ impl Grid {
             }));
             regions.push(region_ptr.clone());
             cells[Self::static_coord_to_index(num_cols, coord)] = Cell {
-                state: State::Numbered(given),
+                state,
                 region: Some(region_ptr.clone()),
             };
 
