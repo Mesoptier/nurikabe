@@ -67,8 +67,7 @@ impl Grid {
         num_cols: usize,
         givens: impl IntoIterator<Item = (Coord, usize)>,
     ) -> Self {
-        let mut cells = vec![Default::default(); num_cols * num_rows];
-        let mut regions = vec![];
+        let mut grid = Self::new_empty(num_rows, num_cols);
 
         let mut total_white_cells = 0;
 
@@ -78,10 +77,10 @@ impl Grid {
                 state,
                 coords: vec![coord],
                 // Note: All neighbors are unknown at this point, otherwise the input would be invalid.
-                unknowns: Self::static_valid_neighbors(num_cols, num_rows, coord).collect(),
+                unknowns: grid.valid_neighbors(coord).collect(),
             }));
-            regions.push(region_ptr.clone());
-            cells[Self::static_coord_to_index(num_cols, coord)] = Cell {
+            grid.regions.push(region_ptr.clone());
+            *grid.cell_mut(coord) = Cell {
                 state,
                 region: Some(region_ptr.clone()),
             };
@@ -89,30 +88,28 @@ impl Grid {
             total_white_cells += given;
         }
 
-        Grid {
-            num_cols,
+        grid.total_black_cells = num_cols * num_rows - total_white_cells;
+
+        grid
+    }
+
+    fn new_empty(num_rows: usize, num_cols: usize) -> Self {
+        Self {
             num_rows,
-            cells: cells.into_boxed_slice(),
-            regions,
-            total_black_cells: num_cols * num_rows - total_white_cells,
+            num_cols,
+            cells: vec![Default::default(); num_cols * num_rows].into_boxed_slice(),
+            regions: vec![],
+            total_black_cells: 0,
         }
     }
 
-    fn static_coord_to_index(width: usize, coord: Coord) -> usize {
-        coord.row * width + coord.col
-    }
-
     fn coord_to_index(&self, coord: Coord) -> usize {
-        Self::static_coord_to_index(self.num_cols, coord)
+        coord.row * self.num_cols + coord.col
     }
 
-    fn static_valid_neighbors(
-        width: usize,
-        height: usize,
-        coord: Coord,
-    ) -> impl Iterator<Item = Coord> {
-        let width = width as isize;
-        let height = height as isize;
+    fn valid_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> {
+        let num_cols = self.num_cols as isize;
+        let num_rows = self.num_rows as isize;
 
         [
             (coord.row as isize - 1, coord.col as isize),
@@ -122,19 +119,12 @@ impl Grid {
         ]
         .into_iter()
         .filter_map(move |(row, col)| {
-            if row >= 0 && row < height && col >= 0 && col < width {
-                Some(Coord {
-                    row: row as usize,
-                    col: col as usize,
-                })
+            if row >= 0 && row < num_rows && col >= 0 && col < num_cols {
+                Some(Coord::new(row as usize, col as usize))
             } else {
                 None
             }
         })
-    }
-
-    fn valid_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> {
-        Self::static_valid_neighbors(self.num_cols, self.num_rows, coord)
     }
 
     fn valid_unknown_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> + '_ {
