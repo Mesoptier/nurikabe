@@ -9,7 +9,7 @@ use nom::{
     IResult,
 };
 
-use crate::{Grid, State};
+use crate::{Coord, Grid, State};
 
 impl FromStr for Grid {
     type Err = ();
@@ -17,29 +17,31 @@ impl FromStr for Grid {
     fn from_str(input: &str) -> Result<Self, ()> {
         let (_, grid) = parse_grid(input).map_err(|_| ())?;
 
-        let width = grid[0].len();
-        let height = grid.len();
+        let num_cols = grid[0].len();
+        let num_rows = grid.len();
         let mut givens = vec![];
 
         let mut mark_as_white = vec![];
         let mut mark_as_black = vec![];
 
-        for (y, row) in grid.iter().enumerate() {
-            if row.len() != width {
+        for (row_idx, row) in grid.iter().enumerate() {
+            if row.len() != num_cols {
                 return Err(());
             }
 
-            for (x, &state) in row.iter().enumerate() {
+            for (col_idx, &state) in row.iter().enumerate() {
+                let coord = Coord::new(row_idx, col_idx);
+
                 match state {
-                    State::Numbered(number) => givens.push(((x, y), number)),
-                    State::White => mark_as_white.push((x, y)),
-                    State::Black => mark_as_black.push((x, y)),
+                    State::Numbered(number) => givens.push((coord, number)),
+                    State::White => mark_as_white.push(coord),
+                    State::Black => mark_as_black.push(coord),
                     State::Unknown => {}
                 }
             }
         }
 
-        let mut grid = Grid::new(width, height, givens);
+        let mut grid = Grid::new(num_rows, num_cols, givens);
 
         for coord in mark_as_white {
             grid.mark_cell(coord, State::White);
