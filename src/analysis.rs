@@ -10,8 +10,7 @@ pub fn is_cell_unreachable(
     coord: Coord,
     assume_black: impl IntoIterator<Item = Coord>,
 ) -> bool {
-    let index = grid.coord_to_index(coord);
-    if grid.cells[index].state != State::Unknown {
+    if grid.cell(coord).state != State::Unknown {
         return false;
     }
 
@@ -38,8 +37,7 @@ pub fn is_cell_unreachable(
         let mut adj_numbered_regions = HashSet::new();
         let mut adj_white_regions = HashSet::new();
         for adj_coord in grid.valid_neighbors(cur_coord) {
-            let adj_index = grid.coord_to_index(adj_coord);
-            if let Some(adj_region_ptr) = &grid.cells[adj_index].region {
+            if let Some(adj_region_ptr) = &grid.cell(adj_coord).region {
                 match adj_region_ptr.borrow().state {
                     State::Numbered(_) => {
                         adj_numbered_regions.insert(ByAddress(adj_region_ptr.clone()));

@@ -142,15 +142,17 @@ impl Grid {
             .filter(move |&coord| self.cell(coord).state == State::Unknown)
     }
 
-    fn cell(&self, coord: Coord) -> &Cell {
+    pub(crate) fn cell(&self, coord: Coord) -> &Cell {
         &self.cells[self.coord_to_index(coord)]
     }
 
-    fn mark_cell(&mut self, coord: Coord, state: State) {
-        let index = self.coord_to_index(coord);
+    pub(crate) fn cell_mut(&mut self, coord: Coord) -> &mut Cell {
+        &mut self.cells[self.coord_to_index(coord)]
+    }
 
+    fn mark_cell(&mut self, coord: Coord, state: State) {
         // TODO: Return Result:Err instead of panicking when contradiction occurs
-        assert_eq!(self.cells[index].state, State::Unknown);
+        assert_eq!(self.cell(coord).state, State::Unknown);
 
         {
             // Create new region containing only the given cell
@@ -162,15 +164,13 @@ impl Grid {
             self.regions.push(region.clone());
 
             // Mark the given cell, and link it to the new region
-            self.cells[index].state = state;
-            self.cells[index].region = Some(region.clone());
+            self.cell_mut(coord).state = state;
+            self.cell_mut(coord).region = Some(region.clone());
         }
 
         // Update adjacent regions
         for adjacent_coord in self.valid_neighbors(coord) {
-            let adjacent_index = self.coord_to_index(adjacent_coord);
-
-            if let Some(adjacent_region_ptr) = self.cells[adjacent_index].region.clone() {
+            if let Some(adjacent_region_ptr) = self.cell(adjacent_coord).region.clone() {
                 // Remove cell from the unknowns of all adjacent regions
                 // TODO: Performance can probably be improved slightly by using .swap_remove()
                 adjacent_region_ptr
@@ -188,7 +188,7 @@ impl Grid {
                 if is_adjacent_state_equivalent {
                     self.fuse_regions(
                         adjacent_region_ptr,
-                        self.cells[index].region.clone().unwrap(),
+                        self.cell(coord).region.clone().unwrap(),
                     );
                 }
             }
@@ -206,8 +206,7 @@ impl Grid {
         // Add cells of r2 to r1
         r1.borrow_mut().coords.extend(r2.borrow().coords.iter());
         for &coord in &r2.borrow().coords {
-            let index = self.coord_to_index(coord);
-            self.cells[index].region = Some(r1.clone());
+            self.cell_mut(coord).region = Some(r1.clone());
         }
 
         // Add new unknowns from r2 to r1
