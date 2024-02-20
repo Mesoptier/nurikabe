@@ -178,6 +178,11 @@ impl Grid {
         }
     }
 
+    fn remove_region(&mut self, region_id: RegionID) -> Option<Region> {
+        self.available_region_ids.push(region_id);
+        self.regions[region_id.to_raw()].take()
+    }
+
     pub(crate) fn mark_cell(&mut self, coord: Coord, state: State) {
         // TODO: Return Result:Err instead of panicking when contradiction occurs
         assert_eq!(self.cell(coord).state, State::Unknown);
@@ -226,7 +231,7 @@ impl Grid {
             return;
         }
 
-        let region_2 = self.regions[region_id_2.to_raw()].take().unwrap();
+        let region_2 = self.remove_region(region_id_2).unwrap();
         let region_1 = self.regions[region_id_1.to_raw()].as_mut().unwrap();
 
         // Add new unknowns from region_2 to region_1
