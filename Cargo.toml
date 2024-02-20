@@ -9,5 +9,4 @@ display = ["colored"]
 
 [dependencies]
 colored = { version = "2", optional = true }
-by_address = "1.0.4"
 nom = "7.1.1"

@@ -14,12 +14,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "by_address"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e245704f60eb4eb45810d65cf14eb54d2eb50a6f3715fe2d7cd01ee905c2944f"
-
-[[package]]
 name = "colored"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -77,7 +71,6 @@ dependencies = [
 name = "nurikabe"
 version = "0.1.0"
 dependencies = [
- "by_address",
  "colored",
  "nom",
 ]

@@ -17,3 +17,20 @@ pub enum State {
     Black,
     Unknown,
 }
+
+mod region_id {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub struct RegionID(usize);
+
+    impl RegionID {
+        pub unsafe fn from_raw(raw: usize) -> Self {
+            Self(raw)
+        }
+
+        pub fn to_raw(self) -> usize {
+            self.0
+        }
+    }
+}
+
+pub use region_id::RegionID;

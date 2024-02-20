@@ -1,7 +1,5 @@
 use std::collections::{HashSet, VecDeque};
 
-use by_address::ByAddress;
-
 use crate::{Coord, Grid, State};
 
 /// Check if a cell is unreachable by a white/numbered region.
@@ -36,13 +34,13 @@ pub fn is_cell_unreachable(
         let mut adj_numbered_regions = HashSet::new();
         let mut adj_white_regions = HashSet::new();
         for adj_coord in grid.valid_neighbors(cur_coord) {
-            if let Some(adj_region_ptr) = &grid.cell(adj_coord).region {
-                match adj_region_ptr.borrow().state {
+            if let Some(adj_region_id) = grid.cell(adj_coord).region {
+                match grid.region(adj_region_id).unwrap().state {
                     State::Numbered(_) => {
-                        adj_numbered_regions.insert(ByAddress(adj_region_ptr.clone()));
+                        adj_numbered_regions.insert(adj_region_id);
                     }
                     State::White => {
-                        adj_white_regions.insert(ByAddress(adj_region_ptr.clone()));
+                        adj_white_regions.insert(adj_region_id);
                     }
                     State::Black => {}
                     State::Unknown => unreachable!(),
@@ -60,14 +58,14 @@ pub fn is_cell_unreachable(
         //  1. the adjacent white regions,
         //  2. the path from the `coord` to `cur_coord`.
         let mut min_region_size = depth;
-        for region_ptr in &adj_white_regions {
-            let region = region_ptr.0.borrow();
-            min_region_size += region.coords.len();
+        for &region_id in &adj_white_regions {
+            min_region_size += grid.region(region_id).unwrap().coords.len();
         }
 
         if !adj_numbered_regions.is_empty() {
             // Path reached a numbered region
-            let region = adj_numbered_regions.iter().next().unwrap().0.borrow();
+            let region_id = *adj_numbered_regions.iter().next().unwrap();
+            let region = grid.region(region_id).unwrap();
             if let State::Numbered(max_region_size) = region.state {
                 // Could the current path be fused to the numbered region?
                 if min_region_size + region.coords.len() <= max_region_size {
