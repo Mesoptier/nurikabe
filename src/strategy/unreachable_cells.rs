@@ -6,7 +6,12 @@ use std::collections::{HashSet, VecDeque};
 pub struct UnreachableCells;
 
 impl UnreachableCells {
-    fn is_cell_unreachable(&self, grid: &Grid, coord: Coord) -> bool {
+    pub fn is_cell_unreachable(
+        &self,
+        grid: &Grid,
+        coord: Coord,
+        assume_black: impl IntoIterator<Item = Coord>,
+    ) -> bool {
         let index = grid.coord_to_index(coord);
         if grid.cells[index].state != State::Unknown {
             return false;
@@ -27,6 +32,7 @@ impl UnreachableCells {
             .unwrap_or(0);
 
         let mut explored = HashSet::from([coord]);
+        explored.extend(assume_black);
         let mut queue = VecDeque::from([(coord, 1)]);
 
         while let Some((cur_coord, depth)) = queue.pop_front() {
@@ -116,9 +122,9 @@ impl Strategy for UnreachableCells {
 
         for col in 0..grid.num_cols {
             for row in 0..grid.num_rows {
-                // TODO: Pass mark_as_black to is_cell_unreachable() to avoid revisiting those cells in the BFS
-                if self.is_cell_unreachable(grid, Coord::new(row, col)) {
-                    mark_as_black.insert(Coord::new(row, col));
+                let coord = Coord::new(row, col);
+                if self.is_cell_unreachable(grid, coord, mark_as_black.iter().copied()) {
+                    mark_as_black.insert(coord);
                 }
             }
         }
