@@ -11,14 +11,6 @@ pub mod strategy;
 #[cfg(test)]
 mod test_util;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-enum State {
-    Numbered(usize),
-    White,
-    Black,
-    Unknown,
-}
-
 #[derive(Clone)]
 struct Cell {
     state: State,

@@ -9,3 +9,11 @@ impl Coord {
         Self { row, col }
     }
 }
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum State {
+    Numbered(usize),
+    White,
+    Black,
+    Unknown,
+}
