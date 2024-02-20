@@ -1,26 +1,15 @@
 use std::cell::Ref;
 use std::{cell::RefCell, rc::Rc};
 
+pub use grid::*;
 use strategy::Strategy;
 
 pub mod analysis;
+mod grid;
 pub mod grid_from_str;
 pub mod strategy;
-
 #[cfg(test)]
 mod test_util;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Coord {
-    row: usize,
-    col: usize,
-}
-
-impl Coord {
-    pub fn new(row: usize, col: usize) -> Self {
-        Self { row, col }
-    }
-}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 enum State {
@@ -232,9 +221,11 @@ impl Grid {
 
 #[cfg(feature = "display")]
 mod display {
-    use crate::{Coord, Grid, State};
-    use colored::Colorize;
     use std::fmt::{Display, Formatter};
+
+    use colored::Colorize;
+
+    use crate::{Coord, Grid, State};
 
     impl Display for Grid {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
