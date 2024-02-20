@@ -274,7 +274,9 @@ mod display {
                         .copied();
 
                     let string = match (state, prev_state) {
-                        (State::Numbered(number), _) => format!("{:^3}", number),
+                        (State::Numbered(number), _) => {
+                            format!("{:^3}", number.to_string().black())
+                        }
                         (state, Some(prev_state)) if state != prev_state => {
                             format!("{:^3}", "*".bright_red())
                         }
