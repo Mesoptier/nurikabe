@@ -1,7 +1,9 @@
-use super::Strategy;
-use crate::strategy::unreachable_cells::UnreachableCells;
-use crate::{Coord, State};
 use std::collections::HashSet;
+
+use crate::analysis::is_cell_unreachable;
+use crate::{Coord, State};
+
+use super::Strategy;
 
 pub struct AvoidPools;
 
@@ -37,9 +39,9 @@ impl Strategy for AvoidPools {
                     // the unknown cells black would make the other one unreachable, then it must be
                     // marked white.
                     [(_, State::Black), (_, State::Black), (coord_1, State::Unknown), (coord_2, State::Unknown)] => {
-                        if UnreachableCells.is_cell_unreachable(grid, coord_1, [coord_2]) {
+                        if is_cell_unreachable(grid, coord_1, [coord_2]) {
                             mark_as_white.insert(coord_2);
-                        } else if UnreachableCells.is_cell_unreachable(grid, coord_2, [coord_1]) {
+                        } else if is_cell_unreachable(grid, coord_2, [coord_1]) {
                             mark_as_white.insert(coord_1);
                         }
                     }

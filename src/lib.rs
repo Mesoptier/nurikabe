@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use strategy::Strategy;
 
+pub mod analysis;
 pub mod grid_from_str;
 pub mod strategy;
 
