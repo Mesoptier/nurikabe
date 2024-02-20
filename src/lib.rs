@@ -3,7 +3,6 @@ use strategy::Strategy;
 
 pub mod analysis;
 mod grid;
-pub mod grid_from_str;
 pub mod strategy;
 #[cfg(test)]
 mod test_util;

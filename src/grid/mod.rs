@@ -1,3 +1,5 @@
+pub mod from_str;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Coord {
     pub row: usize,
@@ -18,19 +20,15 @@ pub enum State {
     Unknown,
 }
 
-mod region_id {
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct RegionID(usize);
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct RegionID(usize);
 
-    impl RegionID {
-        pub unsafe fn from_raw(raw: usize) -> Self {
-            Self(raw)
-        }
+impl RegionID {
+    pub unsafe fn from_raw(raw: usize) -> Self {
+        Self(raw)
+    }
 
-        pub fn to_raw(self) -> usize {
-            self.0
-        }
+    pub fn to_raw(self) -> usize {
+        self.0
     }
 }
-
-pub use region_id::RegionID;
