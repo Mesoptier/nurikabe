@@ -150,6 +150,10 @@ impl Grid {
         &mut self.cells[self.coord_to_index(coord)]
     }
 
+    pub(crate) fn cells(&self) -> impl Iterator<Item = &Cell> {
+        self.cells.iter()
+    }
+
     fn mark_cell(&mut self, coord: Coord, state: State) {
         // TODO: Return Result:Err instead of panicking when contradiction occurs
         assert_eq!(self.cell(coord).state, State::Unknown);
@@ -314,7 +318,7 @@ impl Solver {
             let mut result = false;
 
             #[cfg(feature = "display")]
-            let prev_states = grid.cells.iter().map(|cell| cell.state).collect::<Vec<_>>();
+            let prev_states = grid.cells().map(|cell| cell.state).collect::<Vec<_>>();
 
             for strategy in &self.strategies {
                 result = strategy.apply(grid);
