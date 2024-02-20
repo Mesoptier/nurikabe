@@ -1,3 +1,4 @@
+use std::cell::Ref;
 use std::{cell::RefCell, rc::Rc};
 
 use strategy::Strategy;
@@ -144,6 +145,10 @@ impl Grid {
         self.cells.iter()
     }
 
+    pub(crate) fn regions(&self) -> impl Iterator<Item = Ref<Region>> {
+        self.regions.iter().map(|region| region.borrow())
+    }
+
     fn mark_cell(&mut self, coord: Coord, state: State) {
         // TODO: Return Result:Err instead of panicking when contradiction occurs
         assert_eq!(self.cell(coord).state, State::Unknown);
@@ -218,9 +223,8 @@ impl Grid {
     fn is_complete(&self) -> bool {
         let total_cells = self.num_cols * self.num_rows;
         let marked_cells = self
-            .regions
-            .iter()
-            .map(|region| region.borrow().coords.len())
+            .regions()
+            .map(|region| region.coords.len())
             .sum::<usize>();
         total_cells == marked_cells
     }

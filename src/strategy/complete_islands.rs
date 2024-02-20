@@ -12,8 +12,7 @@ impl Strategy for CompleteIslands {
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
 
-        for region_ptr in &grid.regions {
-            let region = region_ptr.borrow();
+        for region in grid.regions() {
             if let State::Numbered(number) = region.state {
                 if number == region.coords.len() {
                     mark_as_black.extend(region.unknowns.iter());

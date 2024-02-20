@@ -16,11 +16,10 @@ pub fn is_cell_unreachable(
 
     // The maximum size a white region can be if we still want to be able to join it with a numbered region
     let maximum_white_region_size = grid
-        .regions
-        .iter()
-        .filter_map(|region_ptr| {
-            if let State::Numbered(max_region_size) = region_ptr.borrow().state {
-                Some(max_region_size - region_ptr.borrow().coords.len())
+        .regions()
+        .filter_map(|region| {
+            if let State::Numbered(max_region_size) = region.state {
+                Some(max_region_size - region.coords.len())
             } else {
                 None
             }

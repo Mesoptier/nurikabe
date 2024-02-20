@@ -13,8 +13,7 @@ impl Strategy for DualLiberties {
     fn apply(&self, grid: &mut Grid) -> bool {
         let mut mark_as_black = HashSet::<Coord>::new();
 
-        for region_ptr in &grid.regions {
-            let region = region_ptr.borrow();
+        for region in grid.regions() {
             if let State::Numbered(number) = region.state {
                 if region.coords.len() + 1 == number && region.unknowns.len() == 2 {
                     let adj1 = grid.valid_unknown_neighbors(region.unknowns[0]);

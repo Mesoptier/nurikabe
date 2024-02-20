@@ -13,9 +13,7 @@ impl Strategy for SingleLiberties {
         let mut mark_as_black = HashSet::<Coord>::new();
         let mut mark_as_white = HashSet::<Coord>::new();
 
-        for region_ptr in &grid.regions {
-            let region = region_ptr.borrow();
-
+        for region in grid.regions() {
             let is_region_complete = match region.state {
                 State::Unknown => unreachable!(),
                 State::White => false,
