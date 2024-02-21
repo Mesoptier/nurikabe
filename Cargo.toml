@@ -1,5 +1,3 @@
 [workspace]
-
-members = [
-    "solver"
-]
+members = ["solver", "scrape"]
+resolver = "2"

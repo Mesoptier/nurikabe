@@ -1,5 +1,5 @@
 # 15x15 Hard Nurikabe Puzzle ID: 6,545,181
-# Copyright https://www.puzzle-nurikabe.com/
+# Puzzle data from https://www.puzzle-nurikabe.com/
 1.1..6.4......2
 ...10........1..
 .2.......4....1
