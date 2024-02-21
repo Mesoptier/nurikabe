@@ -58,5 +58,6 @@ fn main() {
     .unwrap();
 
     println!("{}", grid);
-    solver.solve(&mut grid);
+    let solver_result = solver.solve(&mut grid);
+    println!("{:?}", solver_result);
 }

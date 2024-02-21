@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::analysis::is_region_confined;
 use crate::grid::State;
-use crate::strategy::Strategy;
+use crate::strategy::{Strategy, StrategyResult};
 use crate::Grid;
 
 pub struct Confinement;
@@ -12,28 +12,29 @@ impl Strategy for Confinement {
         "Confinement"
     }
 
-    fn apply(&self, grid: &mut Grid) -> bool {
+    fn apply(&self, grid: &mut Grid) -> StrategyResult {
         let mut mark_as_white = HashSet::new();
         let mut mark_as_black = HashSet::new();
 
         grid.iter()
             .filter(|(_, cell)| cell.state.is_none())
-            .for_each(|(coord, _)| {
-                grid.regions_iter()
-                    .filter(|(region_id, _)| is_region_confined(grid, *region_id, [coord]))
-                    .for_each(|(_, region)| {
+            .try_for_each(|(coord, _)| {
+                grid.regions_iter().try_for_each(|(region_id, region)| {
+                    if is_region_confined(grid, region_id, [coord])? {
                         if region.state.is_black() {
                             mark_as_black.insert(coord);
                         } else {
                             mark_as_white.insert(coord);
                         }
-                    })
-            });
+                    }
+                    Ok(())
+                })
+            })?;
 
         grid.regions_iter()
             .filter(|(_, region)| matches!(region.state, State::Numbered(number) if region.coords.len() < number))
-            .for_each(|(region_id, region)| {
-                region.unknowns.iter().for_each(|&coord| {
+            .try_for_each(|(region_id, region)| {
+                region.unknowns.iter().try_for_each(|&coord| {
                     let mut assume_visited = vec![coord];
                     assume_visited.extend(grid.valid_unknown_neighbors(coord));
 
@@ -48,23 +49,24 @@ impl Strategy for Confinement {
                     grid.regions_iter()
                         .filter(|(other_region_id, _)| *other_region_id != region_id)
                         .filter(|(_, other_region)| other_region.state.is_numbered())
-                        .for_each(|(other_region_id, _)| {
-                            if is_region_confined(grid, other_region_id, assume_visited.iter().copied()) {
+                        .try_for_each(|(other_region_id, _)| {
+                            if is_region_confined(grid, other_region_id, assume_visited.iter().copied())? {
                                 mark_as_black.insert(coord);
                             }
+                            Ok(())
                         })
                 })
-            });
+            })?;
 
         let result = !mark_as_black.is_empty() || !mark_as_white.is_empty();
 
         for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black);
+            grid.mark_cell(coord, State::Black)?;
         }
         for coord in mark_as_white {
-            grid.mark_cell(coord, State::White);
+            grid.mark_cell(coord, State::White)?;
         }
 
-        result
+        Ok(result)
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::analysis::is_cell_unreachable;
 use crate::{Coord, State};
 
-use super::Strategy;
+use super::{Strategy, StrategyResult};
 
 pub struct AvoidPools;
 
@@ -12,7 +12,7 @@ impl Strategy for AvoidPools {
         "AvoidPools"
     }
 
-    fn apply(&self, grid: &mut crate::Grid) -> bool {
+    fn apply(&self, grid: &mut crate::Grid) -> StrategyResult {
         let mut mark_as_white = HashSet::<Coord>::new();
 
         for col in 1..grid.num_cols {
@@ -52,9 +52,9 @@ impl Strategy for AvoidPools {
 
         let result = !mark_as_white.is_empty();
         for coord in mark_as_white {
-            grid.mark_cell(coord, State::White);
+            grid.mark_cell(coord, State::White)?;
         }
-        result
+        Ok(result)
     }
 }
 

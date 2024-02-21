@@ -5,6 +5,12 @@ pub mod analysis;
 mod grid;
 pub mod strategy;
 
+#[derive(Debug)]
+pub enum SolverError {
+    Contradiction,
+    NoStrategyApplies,
+}
+
 pub struct Solver {
     strategies: Vec<Box<dyn Strategy>>,
 }
@@ -14,7 +20,7 @@ impl Solver {
         Self { strategies }
     }
 
-    pub fn solve(&mut self, grid: &mut Grid) {
+    pub fn solve(&mut self, grid: &mut Grid) -> Result<(), SolverError> {
         while !grid.is_complete() {
             let mut result = false;
 
@@ -22,7 +28,7 @@ impl Solver {
             let prev_states = grid.cells().map(|cell| cell.state).collect::<Vec<_>>();
 
             for strategy in &self.strategies {
-                result = strategy.apply(grid);
+                result = strategy.apply(grid)?;
                 if result {
                     #[cfg(feature = "display")]
                     eprintln!("applying strategy {}", strategy.name());
@@ -33,11 +39,13 @@ impl Solver {
             if !result {
                 #[cfg(feature = "display")]
                 eprintln!("no strategy applies");
-                break;
+                return Err(SolverError::NoStrategyApplies);
             }
 
             #[cfg(feature = "display")]
             println!("{}", grid.diff(&prev_states));
         }
+
+        Ok(())
     }
 }

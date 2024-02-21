@@ -1,3 +1,5 @@
+use crate::SolverError;
+
 #[cfg(feature = "display")]
 pub mod display;
 pub mod from_str;
@@ -204,9 +206,11 @@ impl Grid {
         self.regions[region_id.to_index()].take()
     }
 
-    pub(crate) fn mark_cell(&mut self, coord: Coord, state: State) {
-        // TODO: Return Result:Err instead of panicking when contradiction occurs
-        assert_eq!(self.cell(coord).state, None);
+    pub(crate) fn mark_cell(&mut self, coord: Coord, state: State) -> Result<(), SolverError> {
+        if self.cell(coord).state.is_some() {
+            // If the cell is already marked, we can't mark it again
+            return Err(SolverError::Contradiction);
+        }
 
         {
             // Create new region containing only the given cell
@@ -241,6 +245,8 @@ impl Grid {
                 }
             }
         }
+
+        Ok(())
     }
 
     fn fuse_regions(&mut self, region_id_1: RegionID, region_id_2: RegionID) {

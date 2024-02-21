@@ -1,6 +1,8 @@
-use super::Strategy;
-use crate::{Coord, Grid, State};
 use std::collections::HashSet;
+
+use crate::{Coord, Grid, State};
+
+use super::{Strategy, StrategyResult};
 
 pub struct SingleLiberties;
 
@@ -9,7 +11,7 @@ impl Strategy for SingleLiberties {
         "SingleLiberties"
     }
 
-    fn apply(&self, grid: &mut Grid) -> bool {
+    fn apply(&self, grid: &mut Grid) -> StrategyResult {
         let mut mark_as_black = HashSet::<Coord>::new();
         let mut mark_as_white = HashSet::<Coord>::new();
 
@@ -32,12 +34,12 @@ impl Strategy for SingleLiberties {
         let result = !mark_as_black.is_empty() || !mark_as_white.is_empty();
 
         for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black);
+            grid.mark_cell(coord, State::Black)?;
         }
         for coord in mark_as_white {
-            grid.mark_cell(coord, State::White);
+            grid.mark_cell(coord, State::White)?;
         }
 
-        result
+        Ok(result)
     }
 }

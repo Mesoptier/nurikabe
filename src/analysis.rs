@@ -1,6 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 
-use crate::{Coord, Grid, RegionID, State};
+use crate::{Coord, Grid, RegionID, SolverError, State};
 
 /// Check if a cell is unreachable by a white/numbered region.
 pub fn is_cell_unreachable(
@@ -107,7 +107,7 @@ pub(crate) fn is_region_confined(
     grid: &Grid,
     region_id: RegionID,
     assume_visited: impl IntoIterator<Item = Coord>,
-) -> bool {
+) -> Result<bool, SolverError> {
     let region = grid.region(region_id).unwrap();
 
     let mut open = VecDeque::from_iter(region.unknowns.iter().copied());
@@ -131,7 +131,7 @@ pub(crate) fn is_region_confined(
             State::Black => closed.len() < grid.total_black_cells,
         };
         if !region_needs_more_cells {
-            return false;
+            return Ok(false);
         }
 
         let other_region = grid
@@ -142,7 +142,8 @@ pub(crate) fn is_region_confined(
         match region.state {
             State::Numbered(_) => match other_region.map(|region| region.state) {
                 Some(State::Numbered(_)) => {
-                    unreachable!("Two numbered regions should never be adjacent");
+                    // Two numbered regions should never be adjacent
+                    return Err(SolverError::Contradiction);
                 }
                 Some(State::White) => {
                     // Consume the white region
@@ -172,7 +173,7 @@ pub(crate) fn is_region_confined(
             State::White => match other_region.map(|region| region.state) {
                 Some(State::Numbered(_)) => {
                     // White region reached a numbered region, so it is not confined
-                    return false;
+                    return Ok(false);
                 }
                 Some(State::White) | None => {
                     // Consume the white region / unknown cell
@@ -210,5 +211,5 @@ pub(crate) fn is_region_confined(
         State::White => true,
         State::Black => closed.len() < grid.total_black_cells,
     };
-    region_needs_more_cells
+    Ok(region_needs_more_cells)
 }

@@ -41,10 +41,10 @@ impl FromStr for Grid {
         let mut grid = Grid::new(num_rows, num_cols, givens);
 
         for coord in mark_as_white {
-            grid.mark_cell(coord, State::White);
+            grid.mark_cell(coord, State::White).unwrap();
         }
         for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black);
+            grid.mark_cell(coord, State::Black).unwrap();
         }
 
         Ok(grid)

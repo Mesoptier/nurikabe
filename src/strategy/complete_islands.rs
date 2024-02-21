@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::{Coord, Grid, State};
 
-use super::Strategy;
+use super::{Strategy, StrategyResult};
 
 pub struct CompleteIslands;
 
@@ -11,7 +11,7 @@ impl Strategy for CompleteIslands {
         "CompleteIslands"
     }
 
-    fn apply(&self, grid: &mut Grid) -> bool {
+    fn apply(&self, grid: &mut Grid) -> StrategyResult {
         let mut mark_as_black = HashSet::<Coord>::new();
 
         for region in grid.regions() {
@@ -24,9 +24,9 @@ impl Strategy for CompleteIslands {
 
         let result = !mark_as_black.is_empty();
         for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black);
+            grid.mark_cell(coord, State::Black)?;
         }
-        result
+        Ok(result)
     }
 }
 

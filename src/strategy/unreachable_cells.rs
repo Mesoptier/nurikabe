@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::analysis::is_cell_unreachable;
 use crate::{Coord, Grid, State};
 
-use super::Strategy;
+use super::{Strategy, StrategyResult};
 
 pub struct UnreachableCells;
 
@@ -12,7 +12,7 @@ impl Strategy for UnreachableCells {
         "UnreachableCells"
     }
 
-    fn apply(&self, grid: &mut Grid) -> bool {
+    fn apply(&self, grid: &mut Grid) -> StrategyResult {
         let mut mark_as_black = HashSet::<Coord>::new();
 
         for col in 0..grid.num_cols {
@@ -26,8 +26,8 @@ impl Strategy for UnreachableCells {
 
         let result = !mark_as_black.is_empty();
         for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black);
+            grid.mark_cell(coord, State::Black)?;
         }
-        result
+        Ok(result)
     }
 }
