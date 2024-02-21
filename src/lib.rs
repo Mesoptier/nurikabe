@@ -36,6 +36,10 @@ impl Solver {
             }
 
             if !result {
+                // Detect contradictions before giving up because no strategy applied, so the
+                // Hypotheticals strategy has a chance to work.
+                self.detect_contradictions(grid)?;
+
                 #[cfg(feature = "display")]
                 eprintln!("no strategy applies");
                 return Err(SolverError::NoStrategyApplies);
