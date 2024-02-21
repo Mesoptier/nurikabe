@@ -1,5 +1,6 @@
 use crate::SolverError;
 
+mod analysis;
 #[cfg(feature = "display")]
 pub mod display;
 pub mod from_str;
@@ -33,6 +34,13 @@ impl State {
     pub(crate) fn is_black(self) -> bool {
         matches!(self, Self::Black)
     }
+
+    pub(crate) fn opposite(self) -> Self {
+        match self {
+            Self::White | Self::Numbered(_) => Self::Black,
+            Self::Black => Self::White,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -60,7 +68,7 @@ impl RegionID {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Region {
     pub(crate) state: State,
     /// Coordinates of cells in the region
@@ -69,6 +77,24 @@ pub(crate) struct Region {
     pub(crate) unknowns: Vec<Coord>,
 }
 
+impl Region {
+    /// Returns the number of cells in the region.
+    pub(crate) fn len(&self) -> usize {
+        self.coords.len()
+    }
+
+    /// Returns the number of unknown cells neighboring the region.
+    pub(crate) fn unknowns_len(&self) -> usize {
+        self.unknowns.len()
+    }
+
+    /// Returns `true` if the region is closed, i.e. it has no neighboring unknown cells.
+    pub(crate) fn is_closed(&self) -> bool {
+        self.unknowns.is_empty()
+    }
+}
+
+#[derive(Clone)]
 pub struct Grid {
     pub(crate) num_rows: usize,
     pub(crate) num_cols: usize,
@@ -212,18 +238,16 @@ impl Grid {
             return Err(SolverError::Contradiction);
         }
 
-        {
-            // Create new region containing only the given cell
-            let region_id = self.insert_region(Region {
-                state,
-                coords: vec![coord],
-                unknowns: self.valid_unknown_neighbors(coord).collect(),
-            });
+        // Create new region containing only the given cell
+        let mut region_id = self.insert_region(Region {
+            state,
+            coords: vec![coord],
+            unknowns: self.valid_unknown_neighbors(coord).collect(),
+        });
 
-            // Mark the given cell, and link it to the new region
-            self.cell_mut(coord).state = Some(state);
-            self.cell_mut(coord).region = Some(region_id);
-        }
+        // Mark the given cell, and link it to the new region
+        self.cell_mut(coord).state = Some(state);
+        self.cell_mut(coord).region = Some(region_id);
 
         // Update adjacent regions
         for adjacent_coord in self.valid_neighbors(coord) {
@@ -241,7 +265,7 @@ impl Grid {
                     State::Black => state == State::Black,
                 };
                 if is_adjacent_state_equivalent {
-                    self.fuse_regions(adjacent_region_id, self.cell(coord).region.unwrap());
+                    region_id = self.fuse_regions(adjacent_region_id, region_id)?;
                 }
             }
         }
@@ -249,21 +273,47 @@ impl Grid {
         Ok(())
     }
 
-    fn fuse_regions(&mut self, region_id_1: RegionID, region_id_2: RegionID) {
-        // TODO: Check correctness. E.g. currently we might lose a numbered region if r1 is white and r2 is numbered.
-
+    fn fuse_regions(
+        &mut self,
+        region_id_1: RegionID,
+        region_id_2: RegionID,
+    ) -> Result<RegionID, SolverError> {
         // No need to fuse a region to itself
         if region_id_1 == region_id_2 {
-            return;
+            return Ok(region_id_1);
         }
 
-        if self.region(region_id_2).unwrap().state.is_numbered() {
-            // Swap the region IDs so that region_id_1 is the numbered region
-            return self.fuse_regions(region_id_2, region_id_1);
+        let region_1 = self.region(region_id_1).unwrap();
+        let region_2 = self.region(region_id_2).unwrap();
+
+        match (region_1.state, region_2.state) {
+            (State::Numbered(_), State::Numbered(_)) => {
+                // If both regions are numbered, we can't fuse them
+                return Err(SolverError::Contradiction);
+            }
+            (_, State::Numbered(_)) => {
+                // Swap the regions so that region_1 is the numbered region
+                return self.fuse_regions(region_id_2, region_id_1);
+            }
+            (State::Numbered(number), State::White) => {
+                if region_1.len() + region_2.len() > number {
+                    // If the combined regions have more cells than the number, we can't fuse them
+                    return Err(SolverError::Contradiction);
+                }
+
+                // => Fuse the regions
+            }
+            (State::White, State::White) | (State::Black, State::Black) => {
+                // => Fuse the regions
+            }
+            _ => {
+                // If the regions have incompatible states, we can't fuse them
+                return Err(SolverError::Contradiction);
+            }
         }
 
         let region_2 = self.remove_region(region_id_2).unwrap();
-        let region_1 = self.regions[region_id_1.to_index()].as_mut().unwrap();
+        let region_1 = self.region_mut(region_id_1).unwrap();
 
         // Add new unknowns from region_2 to region_1
         for coord in region_2.unknowns {
@@ -275,16 +325,15 @@ impl Grid {
         // Add cells from region_2 to region_1
         region_1.coords.extend(&region_2.coords);
         for coord in region_2.coords {
-            self.cells[self.coord_to_index(coord)].region = Some(region_id_1);
+            self.cell_mut(coord).region = Some(region_id_1);
         }
+
+        Ok(region_id_1)
     }
 
     pub(crate) fn is_complete(&self) -> bool {
         let total_cells = self.num_cols * self.num_rows;
-        let marked_cells = self
-            .regions()
-            .map(|region| region.coords.len())
-            .sum::<usize>();
+        let marked_cells = self.regions().map(|region| region.len()).sum::<usize>();
         total_cells == marked_cells
     }
 }

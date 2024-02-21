@@ -1,9 +1,10 @@
-use nom::branch::alt;
 use std::str::FromStr;
 
-use nom::character::complete::{char, digit1, line_ending};
+use nom::branch::alt;
+use nom::character::complete::{char, digit1, line_ending, not_line_ending};
 use nom::combinator::{map, value};
-use nom::multi::{many1, separated_list1};
+use nom::multi::{many0, many1, separated_list1};
+use nom::sequence::delimited;
 use nom::IResult;
 
 use crate::{Coord, Grid, State};
@@ -73,7 +74,14 @@ impl Grid {
 }
 
 fn parse_grid(input: &str) -> IResult<&str, Vec<Vec<Option<State>>>> {
+    let (input, _) = parse_header(input)?;
     separated_list1(line_ending, parse_row)(input)
+}
+
+/// Parse the header comments (i.e. lines starting with `#`).
+fn parse_header(input: &str) -> IResult<&str, ()> {
+    let (input, _) = many0(delimited(char('#'), not_line_ending, line_ending))(input)?;
+    Ok((input, ()))
 }
 
 fn parse_row(input: &str) -> IResult<&str, Vec<Option<State>>> {

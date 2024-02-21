@@ -1,22 +1,31 @@
+use std::fs;
 use std::str::FromStr;
 
 use nurikabe::{
     strategy::{
         avoid_pools::AvoidPools, complete_islands::CompleteIslands, confinement::Confinement,
-        dual_liberties::DualLiberties, single_liberties::SingleLiberties,
-        unreachable_cells::UnreachableCells,
+        dual_liberties::DualLiberties, hypotheticals::Hypotheticals,
+        single_liberties::SingleLiberties, unreachable_cells::UnreachableCells,
     },
-    Grid, Solver,
+    DisplayLogger, Grid, Solver,
 };
 
 fn main() {
-    let mut solver = Solver::new(vec![
+    let solver = Solver::new(vec![
         Box::new(CompleteIslands),
         Box::new(SingleLiberties),
         Box::new(DualLiberties),
         Box::new(AvoidPools),
         Box::new(UnreachableCells),
         Box::new(Confinement),
+        Box::new(Hypotheticals::new(vec![
+            Box::new(CompleteIslands),
+            Box::new(SingleLiberties),
+            Box::new(DualLiberties),
+            Box::new(AvoidPools),
+            Box::new(UnreachableCells),
+            // Box::new(Confinement),
+        ])),
     ]);
 
     // https://www.puzzle-nurikabe.com/
@@ -39,25 +48,29 @@ fn main() {
 
     // Conceptis Puzzles
     // 10x14, Classic Nurikabe, Very Hard, ID: 29090611683
-    let mut grid = Grid::from_str(concat!(
-        "7....3....\n",
-        ".......3..\n",
-        "...3..2...\n",
-        "..........\n",
-        ".........3\n",
-        "..2....5..\n",
-        "......2...\n",
-        ".4.....5..\n",
-        "..........\n",
-        "......7...\n",
-        "........8.\n",
-        ".........8\n",
-        "..........\n",
-        ".3........\n",
-    ))
-    .unwrap();
+    // let mut grid = Grid::from_str(concat!(
+    //     "7....3....\n",
+    //     ".......3..\n",
+    //     "...3..2...\n",
+    //     "..........\n",
+    //     ".........3\n",
+    //     "..2....5..\n",
+    //     "......2...\n",
+    //     ".4.....5..\n",
+    //     "..........\n",
+    //     "......7...\n",
+    //     "........8.\n",
+    //     ".........8\n",
+    //     "..........\n",
+    //     ".3........\n",
+    // ))
+    // .unwrap();
+
+    let input_string =
+        fs::read_to_string("data/puzzles/puzzle-nurikabe-com/15x15-hard-6545181.txt").unwrap();
+    let mut grid = Grid::from_str(input_string.as_str()).unwrap();
 
     println!("{}", grid);
-    let solver_result = solver.solve(&mut grid);
+    let solver_result = solver.solve_with_logger(&mut grid, DisplayLogger::new());
     println!("{:?}", solver_result);
 }

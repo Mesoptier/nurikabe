@@ -1,8 +1,6 @@
-use std::collections::HashSet;
+use crate::Grid;
 
-use crate::{Coord, Grid, State};
-
-use super::{Strategy, StrategyResult};
+use super::{MarkSet, Strategy, StrategyResult};
 
 pub struct CompleteIslands;
 
@@ -12,21 +10,15 @@ impl Strategy for CompleteIslands {
     }
 
     fn apply(&self, grid: &mut Grid) -> StrategyResult {
-        let mut mark_as_black = HashSet::<Coord>::new();
+        let mut mark_set = MarkSet::new();
 
         for region in grid.regions() {
-            if let State::Numbered(number) = region.state {
-                if number == region.coords.len() {
-                    mark_as_black.extend(region.unknowns.iter());
-                }
+            if region.state.is_numbered() && !grid.is_region_incomplete(region) {
+                mark_set.mark_as_black.extend(region.unknowns.iter());
             }
         }
 
-        let result = !mark_as_black.is_empty();
-        for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black)?;
-        }
-        Ok(result)
+        mark_set.apply(grid)
     }
 }
 
