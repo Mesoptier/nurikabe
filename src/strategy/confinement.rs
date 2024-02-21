@@ -32,7 +32,7 @@ impl Strategy for Confinement {
             })?;
 
         grid.regions_iter()
-            .filter(|(_, region)| matches!(region.state, State::Numbered(number) if region.coords.len() < number))
+            .filter(|(_, region)| matches!(region.state, State::Numbered(number) if region.len() < number))
             .try_for_each(|(region_id, region)| {
                 region.unknowns.iter().try_for_each(|&coord| {
                     let mut assume_visited = vec![coord];

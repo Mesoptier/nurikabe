@@ -13,11 +13,11 @@ pub fn is_cell_unreachable(
     }
 
     // The maximum size a white region can be if we still want to be able to join it with a numbered region
-    let maximum_white_region_size = grid
+    let max_white_region_len = grid
         .regions()
         .filter_map(|region| {
-            if let State::Numbered(max_region_size) = region.state {
-                Some(max_region_size - region.coords.len())
+            if let State::Numbered(max_region_len) = region.state {
+                Some(max_region_len - region.len())
             } else {
                 None
             }
@@ -56,18 +56,18 @@ pub fn is_cell_unreachable(
         // Determine minimum size of the region formed by fusing:
         //  1. the adjacent white regions,
         //  2. the path from the `coord` to `cur_coord`.
-        let mut min_region_size = depth;
+        let mut extra_region_len = depth;
         for &region_id in &adj_white_regions {
-            min_region_size += grid.region(region_id).unwrap().coords.len();
+            extra_region_len += grid.region(region_id).unwrap().len();
         }
 
         if !adj_numbered_regions.is_empty() {
             // Path reached a numbered region
             let region_id = *adj_numbered_regions.iter().next().unwrap();
             let region = grid.region(region_id).unwrap();
-            if let State::Numbered(max_region_size) = region.state {
+            if let State::Numbered(max_region_len) = region.state {
                 // Could the current path be fused to the numbered region?
-                if min_region_size + region.coords.len() <= max_region_size {
+                if extra_region_len + region.len() <= max_region_len {
                     // Current path might be reachable from the numbered region
                     return false;
                 } else {
@@ -83,7 +83,7 @@ pub fn is_cell_unreachable(
             // Path reached a white region
             // Could the region formed by fusing the current path to the
             // adjacent white regions ever be connected to a numbered region?
-            if min_region_size + 1 <= maximum_white_region_size {
+            if extra_region_len + 1 <= max_white_region_len {
                 // Current path might be reachable through the adjacent white regions
                 return false;
             } else {

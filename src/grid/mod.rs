@@ -76,6 +76,23 @@ pub(crate) struct Region {
     pub(crate) unknowns: Vec<Coord>,
 }
 
+impl Region {
+    /// Returns the number of cells in the region.
+    pub(crate) fn len(&self) -> usize {
+        self.coords.len()
+    }
+
+    /// Returns the number of unknown cells neighboring the region.
+    pub(crate) fn unknowns_len(&self) -> usize {
+        self.unknowns.len()
+    }
+
+    /// Returns `true` if the region is closed, i.e. it has no neighboring unknown cells.
+    pub(crate) fn is_closed(&self) -> bool {
+        self.unknowns.is_empty()
+    }
+}
+
 #[derive(Clone)]
 pub struct Grid {
     pub(crate) num_rows: usize,
@@ -301,10 +318,7 @@ impl Grid {
 
     pub(crate) fn is_complete(&self) -> bool {
         let total_cells = self.num_cols * self.num_rows;
-        let marked_cells = self
-            .regions()
-            .map(|region| region.coords.len())
-            .sum::<usize>();
+        let marked_cells = self.regions().map(|region| region.len()).sum::<usize>();
         total_cells == marked_cells
     }
 }

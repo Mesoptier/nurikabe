@@ -16,7 +16,7 @@ impl Strategy for DualLiberties {
 
         for region in grid.regions() {
             if let State::Numbered(number) = region.state {
-                if region.coords.len() + 1 == number && region.unknowns.len() == 2 {
+                if region.len() + 1 == number && region.unknowns_len() == 2 {
                     let adj1 = grid.valid_unknown_neighbors(region.unknowns[0]);
                     let adj2 = grid
                         .valid_unknown_neighbors(region.unknowns[1])

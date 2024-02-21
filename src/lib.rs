@@ -53,20 +53,20 @@ impl Solver {
         for region in grid.regions() {
             match region.state {
                 State::Numbered(number) => {
-                    if region.coords.len() < number && region.unknowns.is_empty() {
+                    if region.len() < number && region.is_closed() {
                         return Err(SolverError::Contradiction);
                     }
-                    if region.coords.len() > number {
+                    if region.len() > number {
                         return Err(SolverError::Contradiction);
                     }
                 }
                 State::White => {
-                    if region.unknowns.is_empty() {
+                    if region.is_closed() {
                         return Err(SolverError::Contradiction);
                     }
                 }
                 State::Black => {
-                    if region.unknowns.is_empty() && region.coords.len() != grid.total_black_cells {
+                    if region.is_closed() && region.len() != grid.total_black_cells {
                         return Err(SolverError::Contradiction);
                     }
                 }

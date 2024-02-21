@@ -18,11 +18,11 @@ impl Strategy for SingleLiberties {
         for region in grid.regions() {
             let is_region_complete = match region.state {
                 State::White => false,
-                State::Black => region.coords.len() == grid.total_black_cells,
-                State::Numbered(number) => region.coords.len() == number,
+                State::Black => region.len() == grid.total_black_cells,
+                State::Numbered(number) => region.len() == number,
             };
 
-            if !is_region_complete && region.unknowns.len() == 1 {
+            if !is_region_complete && region.unknowns_len() == 1 {
                 let unknown_coord = region.unknowns[0];
                 match region.state {
                     State::White | State::Numbered(_) => mark_as_white.insert(unknown_coord),

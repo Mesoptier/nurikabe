@@ -16,7 +16,7 @@ impl Strategy for CompleteIslands {
 
         for region in grid.regions() {
             if let State::Numbered(number) = region.state {
-                if number == region.coords.len() {
+                if number == region.len() {
                     mark_as_black.extend(region.unknowns.iter());
                 }
             }
