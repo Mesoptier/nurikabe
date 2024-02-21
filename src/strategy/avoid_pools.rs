@@ -1,8 +1,6 @@
-use std::collections::HashSet;
-
 use crate::{Coord, State};
 
-use super::{Strategy, StrategyResult};
+use super::{MarkSet, Strategy, StrategyResult};
 
 pub struct AvoidPools;
 
@@ -12,7 +10,7 @@ impl Strategy for AvoidPools {
     }
 
     fn apply(&self, grid: &mut crate::Grid) -> StrategyResult {
-        let mut mark_as_white = HashSet::<Coord>::new();
+        let mut mark_set = MarkSet::new();
 
         for col in 1..grid.num_cols {
             for row in 1..grid.num_rows {
@@ -32,16 +30,16 @@ impl Strategy for AvoidPools {
                     // marked white.
                     [(coord, None), (_, Some(State::Black)), (_, Some(State::Black)), (_, Some(State::Black))] =>
                     {
-                        mark_as_white.insert(coord);
+                        mark_set.insert(coord, State::White);
                     }
                     // With two black cells and two unknown cells in a 2x2 square. If marking one of
                     // the unknown cells black would make the other one unreachable, then it must be
                     // marked white.
                     [(coord_1, None), (coord_2, None), (_, Some(State::Black)), (_, Some(State::Black))] => {
                         if grid.is_cell_unreachable(coord_1, [coord_2]) {
-                            mark_as_white.insert(coord_2);
+                            mark_set.insert(coord_2, State::White);
                         } else if grid.is_cell_unreachable(coord_2, [coord_1]) {
-                            mark_as_white.insert(coord_1);
+                            mark_set.insert(coord_1, State::White);
                         }
                     }
                     _ => {}
@@ -49,11 +47,7 @@ impl Strategy for AvoidPools {
             }
         }
 
-        let result = !mark_as_white.is_empty();
-        for coord in mark_as_white {
-            grid.mark_cell(coord, State::White)?;
-        }
-        Ok(result)
+        mark_set.apply(grid)
     }
 }
 

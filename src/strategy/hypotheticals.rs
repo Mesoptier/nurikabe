@@ -36,6 +36,7 @@ impl Strategy for Hypotheticals {
                 match result {
                     Ok(_) => {
                         // Solution found
+                        // TODO: Return the solution?
                         Some((coord, state))
                     }
                     Err(SolverError::Contradiction) => {

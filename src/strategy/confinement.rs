@@ -1,7 +1,5 @@
-use std::collections::HashSet;
-
 use crate::grid::State;
-use crate::strategy::{Strategy, StrategyResult};
+use crate::strategy::{MarkSet, Strategy, StrategyResult};
 use crate::Grid;
 
 pub struct Confinement;
@@ -12,19 +10,14 @@ impl Strategy for Confinement {
     }
 
     fn apply(&self, grid: &mut Grid) -> StrategyResult {
-        let mut mark_as_white = HashSet::new();
-        let mut mark_as_black = HashSet::new();
+        let mut mark_set = MarkSet::new();
 
         grid.iter()
             .filter(|(_, cell)| cell.state.is_none())
             .try_for_each(|(coord, _)| {
                 grid.regions_iter().try_for_each(|(region_id, region)| {
                     if grid.is_region_confined(region_id, [coord])? {
-                        if region.state.is_black() {
-                            mark_as_black.insert(coord);
-                        } else {
-                            mark_as_white.insert(coord);
-                        }
+                        mark_set.insert(coord, region.state);
                     }
                     Ok(())
                 })
@@ -50,23 +43,14 @@ impl Strategy for Confinement {
                         .filter(|(_, other_region)| other_region.state.is_numbered())
                         .try_for_each(|(other_region_id, _)| {
                             if grid.is_region_confined(other_region_id, assume_visited.iter().copied())? {
-                                mark_as_black.insert(coord);
+                                mark_set.insert(coord, State::Black);
                             }
                             Ok(())
                         })
                 })
             })?;
 
-        let result = !mark_as_black.is_empty() || !mark_as_white.is_empty();
-
-        for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black)?;
-        }
-        for coord in mark_as_white {
-            grid.mark_cell(coord, State::White)?;
-        }
-
-        Ok(result)
+        mark_set.apply(grid)
     }
 }
 

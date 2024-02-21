@@ -1,8 +1,6 @@
-use std::collections::HashSet;
-
 use crate::{Coord, Grid, State};
 
-use super::{Strategy, StrategyResult};
+use super::{MarkSet, Strategy, StrategyResult};
 
 pub struct UnreachableCells;
 
@@ -12,22 +10,18 @@ impl Strategy for UnreachableCells {
     }
 
     fn apply(&self, grid: &mut Grid) -> StrategyResult {
-        let mut mark_as_black = HashSet::<Coord>::new();
+        let mut mark_set = MarkSet::new();
 
         for col in 0..grid.num_cols {
             for row in 0..grid.num_rows {
                 let coord = Coord::new(row, col);
-                if grid.is_cell_unreachable(coord, mark_as_black.iter().copied()) {
-                    mark_as_black.insert(coord);
+                if grid.is_cell_unreachable(coord, mark_set.mark_as_black.iter().copied()) {
+                    mark_set.insert(coord, State::Black);
                 }
             }
         }
 
-        let result = !mark_as_black.is_empty();
-        for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black)?;
-        }
-        Ok(result)
+        mark_set.apply(grid)
     }
 }
 

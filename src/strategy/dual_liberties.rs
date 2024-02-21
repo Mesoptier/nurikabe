@@ -1,8 +1,6 @@
-use std::collections::HashSet;
+use crate::{Grid, State};
 
-use crate::{Coord, Grid, State};
-
-use super::{Strategy, StrategyResult};
+use super::{MarkSet, Strategy, StrategyResult};
 
 pub struct DualLiberties;
 
@@ -12,7 +10,7 @@ impl Strategy for DualLiberties {
     }
 
     fn apply(&self, grid: &mut Grid) -> StrategyResult {
-        let mut mark_as_black = HashSet::<Coord>::new();
+        let mut mark_set = MarkSet::new();
 
         for region in grid.regions() {
             if let State::Numbered(number) = region.state {
@@ -24,7 +22,7 @@ impl Strategy for DualLiberties {
 
                     for coord in adj1 {
                         if adj2.contains(&coord) {
-                            mark_as_black.insert(coord);
+                            mark_set.insert(coord, State::Black);
                             break;
                         }
                     }
@@ -32,11 +30,7 @@ impl Strategy for DualLiberties {
             }
         }
 
-        let result = !mark_as_black.is_empty();
-        for coord in mark_as_black {
-            grid.mark_cell(coord, State::Black)?;
-        }
-        Ok(result)
+        mark_set.apply(grid)
     }
 }
 
