@@ -33,6 +33,13 @@ impl State {
     pub(crate) fn is_black(self) -> bool {
         matches!(self, Self::Black)
     }
+
+    pub(crate) fn opposite(self) -> Self {
+        match self {
+            Self::White | Self::Numbered(_) => Self::Black,
+            Self::Black => Self::White,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -60,7 +67,7 @@ impl RegionID {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct Region {
     pub(crate) state: State,
     /// Coordinates of cells in the region
@@ -69,6 +76,7 @@ pub(crate) struct Region {
     pub(crate) unknowns: Vec<Coord>,
 }
 
+#[derive(Clone)]
 pub struct Grid {
     pub(crate) num_rows: usize,
     pub(crate) num_cols: usize,
@@ -241,7 +249,7 @@ impl Grid {
                     State::Black => state == State::Black,
                 };
                 if is_adjacent_state_equivalent {
-                    self.fuse_regions(adjacent_region_id, self.cell(coord).region.unwrap());
+                    self.fuse_regions(adjacent_region_id, self.cell(coord).region.unwrap())?;
                 }
             }
         }
@@ -249,15 +257,25 @@ impl Grid {
         Ok(())
     }
 
-    fn fuse_regions(&mut self, region_id_1: RegionID, region_id_2: RegionID) {
+    fn fuse_regions(
+        &mut self,
+        region_id_1: RegionID,
+        region_id_2: RegionID,
+    ) -> Result<(), SolverError> {
         // TODO: Check correctness. E.g. currently we might lose a numbered region if r1 is white and r2 is numbered.
 
         // No need to fuse a region to itself
         if region_id_1 == region_id_2 {
-            return;
+            // TODO: Should this be an error?
+            return Ok(());
         }
 
         if self.region(region_id_2).unwrap().state.is_numbered() {
+            if self.region(region_id_1).unwrap().state.is_numbered() {
+                // If both regions are numbered, we can't fuse them
+                return Err(SolverError::Contradiction);
+            }
+
             // Swap the region IDs so that region_id_1 is the numbered region
             return self.fuse_regions(region_id_2, region_id_1);
         }
@@ -277,6 +295,8 @@ impl Grid {
         for coord in region_2.coords {
             self.cells[self.coord_to_index(coord)].region = Some(region_id_1);
         }
+
+        Ok(())
     }
 
     pub(crate) fn is_complete(&self) -> bool {

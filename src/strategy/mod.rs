@@ -4,6 +4,7 @@ pub mod avoid_pools;
 pub mod complete_islands;
 pub mod confinement;
 pub mod dual_liberties;
+pub mod hypotheticals;
 pub mod single_liberties;
 pub mod unreachable_cells;
 

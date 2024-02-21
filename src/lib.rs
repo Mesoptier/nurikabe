@@ -20,7 +20,7 @@ impl Solver {
         Self { strategies }
     }
 
-    pub fn solve(&mut self, grid: &mut Grid) -> Result<(), SolverError> {
+    pub fn solve(&self, grid: &mut Grid) -> Result<(), SolverError> {
         while !grid.is_complete() {
             let mut result = false;
 
@@ -44,6 +44,33 @@ impl Solver {
 
             #[cfg(feature = "display")]
             println!("{}", grid.diff(&prev_states));
+        }
+
+        self.detect_contradictions(grid)
+    }
+
+    pub fn detect_contradictions(&self, grid: &Grid) -> Result<(), SolverError> {
+        for region in grid.regions() {
+            match region.state {
+                State::Numbered(number) => {
+                    if region.coords.len() < number && region.unknowns.is_empty() {
+                        return Err(SolverError::Contradiction);
+                    }
+                    if region.coords.len() > number {
+                        return Err(SolverError::Contradiction);
+                    }
+                }
+                State::White => {
+                    if region.unknowns.is_empty() {
+                        return Err(SolverError::Contradiction);
+                    }
+                }
+                State::Black => {
+                    if region.unknowns.is_empty() && region.coords.len() != grid.total_black_cells {
+                        return Err(SolverError::Contradiction);
+                    }
+                }
+            }
         }
 
         Ok(())
