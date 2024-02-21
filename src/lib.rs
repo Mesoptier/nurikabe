@@ -51,7 +51,7 @@ impl Solver {
 
     pub fn detect_contradictions(&self, grid: &Grid) -> Result<(), SolverError> {
         for region in grid.regions() {
-            if region.is_closed() && !grid.is_region_complete(region) {
+            if region.is_closed() && grid.is_region_incomplete(region) {
                 return Err(SolverError::Contradiction);
             }
             if grid.is_region_overfilled(region) {

@@ -127,7 +127,7 @@ impl Grid {
                 continue;
             }
 
-            if self.is_region_like_complete(region.state, closed.len()) {
+            if !self.is_region_like_incomplete(region.state, closed.len()) {
                 return Ok(false);
             }
 
@@ -203,18 +203,18 @@ impl Grid {
             }
         }
 
-        Ok(!self.is_region_like_complete(region.state, closed.len()))
+        Ok(self.is_region_like_incomplete(region.state, closed.len()))
     }
 
-    pub(crate) fn is_region_complete(&self, region: &Region) -> bool {
-        self.is_region_like_complete(region.state, region.len())
+    pub(crate) fn is_region_incomplete(&self, region: &Region) -> bool {
+        self.is_region_like_incomplete(region.state, region.len())
     }
 
-    pub(crate) fn is_region_like_complete(&self, region_state: State, region_len: usize) -> bool {
+    pub(crate) fn is_region_like_incomplete(&self, region_state: State, region_len: usize) -> bool {
         match region_state {
-            State::White => false,
-            State::Black => region_len == self.total_black_cells,
-            State::Numbered(number) => region_len == number,
+            State::White => true,
+            State::Black => region_len < self.total_black_cells,
+            State::Numbered(number) => region_len < number,
         }
     }
 

@@ -15,7 +15,7 @@ impl Strategy for CompleteIslands {
         let mut mark_as_black = HashSet::<Coord>::new();
 
         for region in grid.regions() {
-            if region.state.is_numbered() && grid.is_region_complete(region) {
+            if region.state.is_numbered() && !grid.is_region_incomplete(region) {
                 mark_as_black.extend(region.unknowns.iter());
             }
         }
