@@ -57,3 +57,20 @@ impl Strategy for AvoidPools {
         result
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::strategy::test_strategy;
+
+    use super::AvoidPools;
+
+    // Three black cells in a 2x2 square, with the remaining cell being unknown.
+    test_strategy!(test_three_black_1, AvoidPools, "BB\nB.", Some("BB\nBW"));
+    test_strategy!(test_three_black_2, AvoidPools, "BB\n.B", Some("BB\nWB"));
+    test_strategy!(test_three_black_3, AvoidPools, "B.\nBB", Some("BW\nBB"));
+    test_strategy!(test_three_black_4, AvoidPools, ".B\nBB", Some("WB\nBB"));
+
+    // Two black cells and two unknown cells in a 2x2 square. One of the unknown cells must not be
+    // marked black, because it would make the other one unreachable (and therefore also black).
+    test_strategy!(test_two_black_1, AvoidPools, "BBW\n..W", Some("BBW\n.WW"));
+}
