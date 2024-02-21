@@ -280,26 +280,43 @@ impl Grid {
         region_id_1: RegionID,
         region_id_2: RegionID,
     ) -> Result<(), SolverError> {
-        // TODO: Check correctness. E.g. currently we might lose a numbered region if r1 is white and r2 is numbered.
-
         // No need to fuse a region to itself
         if region_id_1 == region_id_2 {
             // TODO: Should this be an error?
             return Ok(());
         }
 
-        if self.region(region_id_2).unwrap().state.is_numbered() {
-            if self.region(region_id_1).unwrap().state.is_numbered() {
+        let region_1 = self.region(region_id_1).unwrap();
+        let region_2 = self.region(region_id_2).unwrap();
+
+        match (region_1.state, region_2.state) {
+            (State::Numbered(_), State::Numbered(_)) => {
                 // If both regions are numbered, we can't fuse them
                 return Err(SolverError::Contradiction);
             }
+            (_, State::Numbered(_)) => {
+                // Swap the regions so that region_1 is the numbered region
+                return self.fuse_regions(region_id_2, region_id_1);
+            }
+            (State::Numbered(number), State::White) => {
+                if region_1.len() + region_2.len() > number {
+                    // If the combined regions have more cells than the number, we can't fuse them
+                    return Err(SolverError::Contradiction);
+                }
 
-            // Swap the region IDs so that region_id_1 is the numbered region
-            return self.fuse_regions(region_id_2, region_id_1);
+                // => Fuse the regions
+            }
+            (State::White, State::White) | (State::Black, State::Black) => {
+                // => Fuse the regions
+            }
+            _ => {
+                // If the regions have incompatible states, we can't fuse them
+                return Err(SolverError::Contradiction);
+            }
         }
 
         let region_2 = self.remove_region(region_id_2).unwrap();
-        let region_1 = self.regions[region_id_1.to_index()].as_mut().unwrap();
+        let region_1 = self.region_mut(region_id_1).unwrap();
 
         // Add new unknowns from region_2 to region_1
         for coord in region_2.unknowns {
@@ -311,7 +328,7 @@ impl Grid {
         // Add cells from region_2 to region_1
         region_1.coords.extend(&region_2.coords);
         for coord in region_2.coords {
-            self.cells[self.coord_to_index(coord)].region = Some(region_id_1);
+            self.cell_mut(coord).region = Some(region_id_1);
         }
 
         Ok(())
