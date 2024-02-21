@@ -22,6 +22,21 @@ pub(crate) enum State {
     Unknown,
 }
 
+impl State {
+    pub(crate) fn is_numbered(self) -> bool {
+        matches!(self, Self::Numbered(_))
+    }
+    pub(crate) fn is_white(self) -> bool {
+        matches!(self, Self::White)
+    }
+    pub(crate) fn is_black(self) -> bool {
+        matches!(self, Self::Black)
+    }
+    pub(crate) fn is_unknown(self) -> bool {
+        matches!(self, Self::Unknown)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Cell {
     pub(crate) state: State,
@@ -41,11 +56,7 @@ impl Default for Cell {
 pub(crate) struct RegionID(usize);
 
 impl RegionID {
-    pub unsafe fn from_raw(raw: usize) -> Self {
-        Self(raw)
-    }
-
-    pub fn to_raw(self) -> usize {
+    pub fn to_index(self) -> usize {
         self.0
     }
 }
@@ -114,6 +125,10 @@ impl Grid {
         coord.row * self.num_cols + coord.col
     }
 
+    fn index_to_coord(&self, index: usize) -> Coord {
+        Coord::new(index / self.num_cols, index % self.num_cols)
+    }
+
     pub(crate) fn valid_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> {
         let num_cols = self.num_cols as isize;
         let num_rows = self.num_rows as isize;
@@ -151,28 +166,37 @@ impl Grid {
         self.cells.iter()
     }
 
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (Coord, &Cell)> {
+        self.cells()
+            .enumerate()
+            .map(move |(index, cell)| (self.index_to_coord(index), cell))
+    }
+
     pub(crate) fn region(&self, region_id: RegionID) -> Option<&Region> {
-        self.regions[region_id.to_raw()].as_ref()
+        self.regions[region_id.to_index()].as_ref()
     }
 
     pub(crate) fn region_mut(&mut self, region_id: RegionID) -> Option<&mut Region> {
-        self.regions[region_id.to_raw()].as_mut()
+        self.regions[region_id.to_index()].as_mut()
     }
 
     pub(crate) fn regions(&self) -> impl Iterator<Item = &Region> {
         self.regions.iter().filter_map(Option::as_ref)
     }
 
+    pub(crate) fn regions_iter(&self) -> impl Iterator<Item = (RegionID, &Region)> {
+        self.regions
+            .iter()
+            .enumerate()
+            .filter_map(|(index, region)| region.as_ref().map(|region| (RegionID(index), region)))
+    }
+
     fn insert_region(&mut self, region: Region) -> RegionID {
         if let Some(region_id) = self.available_region_ids.pop() {
-            self.regions[region_id.to_raw()] = Some(region);
+            self.regions[region_id.to_index()] = Some(region);
             region_id
         } else {
-            let region_id = unsafe {
-                // SAFETY: We are about to push a new region, so the length of the regions vector
-                // is a valid region ID.
-                RegionID::from_raw(self.regions.len())
-            };
+            let region_id = RegionID(self.regions.len());
             self.regions.push(Some(region));
             region_id
         }
@@ -180,7 +204,7 @@ impl Grid {
 
     fn remove_region(&mut self, region_id: RegionID) -> Option<Region> {
         self.available_region_ids.push(region_id);
-        self.regions[region_id.to_raw()].take()
+        self.regions[region_id.to_index()].take()
     }
 
     pub(crate) fn mark_cell(&mut self, coord: Coord, state: State) {
@@ -231,8 +255,13 @@ impl Grid {
             return;
         }
 
+        if self.region(region_id_2).unwrap().state.is_numbered() {
+            // Swap the region IDs so that region_id_1 is the numbered region
+            return self.fuse_regions(region_id_2, region_id_1);
+        }
+
         let region_2 = self.remove_region(region_id_2).unwrap();
-        let region_1 = self.regions[region_id_1.to_raw()].as_mut().unwrap();
+        let region_1 = self.regions[region_id_1.to_index()].as_mut().unwrap();
 
         // Add new unknowns from region_2 to region_1
         for coord in region_2.unknowns {

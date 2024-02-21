@@ -1,6 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 
-use crate::{Coord, Grid, State};
+use crate::{Coord, Grid, RegionID, State};
 
 /// Check if a cell is unreachable by a white/numbered region.
 pub fn is_cell_unreachable(
@@ -102,4 +102,120 @@ pub fn is_cell_unreachable(
     }
 
     true
+}
+
+pub(crate) fn is_region_confined(
+    grid: &Grid,
+    region_id: RegionID,
+    assume_visited: impl IntoIterator<Item = Coord>,
+) -> bool {
+    let region = grid.region(region_id).unwrap();
+
+    let mut open = VecDeque::from_iter(region.unknowns.iter().copied());
+
+    let mut visited = HashSet::new();
+    visited.extend(region.coords.iter().copied());
+    visited.extend(assume_visited);
+
+    // Set of cells that may connect to the region
+    let mut closed = HashSet::new();
+    closed.extend(region.coords.iter().copied());
+
+    while let Some(coord) = open.pop_front() {
+        if !visited.insert(coord) {
+            continue;
+        }
+
+        let region_needs_more_cells = match region.state {
+            State::Numbered(number) => closed.len() < number,
+            State::White => true,
+            State::Black => closed.len() < grid.total_black_cells,
+            State::Unknown => unreachable!(),
+        };
+        if !region_needs_more_cells {
+            return false;
+        }
+
+        let other_region = grid
+            .cell(coord)
+            .region
+            .and_then(|region_id| grid.region(region_id));
+
+        match region.state {
+            State::Numbered(_) => match other_region.map(|region| region.state) {
+                Some(State::Numbered(_)) => {
+                    unreachable!("Two numbered regions should never be adjacent");
+                }
+                Some(State::White) => {
+                    // Consume the white region
+                }
+                Some(State::Black) => {
+                    // Numbered region cannot consume black regions
+                    continue;
+                }
+                None => {
+                    if grid
+                        .valid_neighbors(coord)
+                        .filter_map(|adj_coord| grid.cell(adj_coord).region)
+                        .filter(|adj_region_id| {
+                            grid.region(*adj_region_id)
+                                .map(|adj_region| adj_region.state.is_numbered())
+                                .unwrap_or(false)
+                        })
+                        .any(|adj_region_id| region_id != adj_region_id)
+                    {
+                        // Unknown cell is adjacent to another numbered region, so it cannot be consumed
+                        continue;
+                    }
+
+                    // Consume the unknown cell otherwise
+                }
+                Some(State::Unknown) => unreachable!("Unknown region state"),
+            },
+            State::White => match other_region.map(|region| region.state) {
+                Some(State::Numbered(_)) => {
+                    // White region reached a numbered region, so it is not confined
+                    return false;
+                }
+                Some(State::White) | None => {
+                    // Consume the white region / unknown cell
+                }
+                Some(State::Black) => {
+                    // White region cannot consume black regions
+                    continue;
+                }
+                Some(State::Unknown) => unreachable!("Unknown region state"),
+            },
+            State::Black => match other_region.map(|region| region.state) {
+                Some(State::Numbered(_) | State::White) => {
+                    // Black region cannot consume numbered/white regions
+                    continue;
+                }
+                Some(State::Black) | None => {
+                    // Consume the black region / unknown cell
+                }
+                Some(State::Unknown) => unreachable!("Unknown region state"),
+            },
+            State::Unknown => unreachable!("Unknown region state"),
+        }
+
+        // Consume the region/cell
+        if let Some(other_region) = other_region {
+            closed.extend(other_region.coords.iter().copied());
+            visited.extend(other_region.coords.iter().copied());
+            open.extend(other_region.unknowns.iter().copied());
+        } else {
+            closed.insert(coord);
+            visited.insert(coord);
+            open.extend(grid.valid_neighbors(coord));
+        }
+    }
+
+    let region_needs_more_cells = match region.state {
+        State::Numbered(number) => closed.len() < number,
+        State::White => true,
+        State::Black => closed.len() < grid.total_black_cells,
+        State::Unknown => unreachable!(),
+    };
+    region_needs_more_cells
 }

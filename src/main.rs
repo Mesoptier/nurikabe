@@ -2,8 +2,9 @@ use std::str::FromStr;
 
 use nurikabe::{
     strategy::{
-        avoid_pools::AvoidPools, complete_islands::CompleteIslands, dual_liberties::DualLiberties,
-        single_liberties::SingleLiberties, unreachable_cells::UnreachableCells,
+        avoid_pools::AvoidPools, complete_islands::CompleteIslands, confinement::Confinement,
+        dual_liberties::DualLiberties, single_liberties::SingleLiberties,
+        unreachable_cells::UnreachableCells,
     },
     Grid, Solver,
 };
@@ -15,6 +16,7 @@ fn main() {
         Box::new(DualLiberties),
         Box::new(AvoidPools),
         Box::new(UnreachableCells),
+        Box::new(Confinement),
     ]);
 
     // https://www.puzzle-nurikabe.com/
