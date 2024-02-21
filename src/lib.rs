@@ -4,8 +4,6 @@ use strategy::Strategy;
 pub mod analysis;
 mod grid;
 pub mod strategy;
-#[cfg(test)]
-mod test_util;
 
 pub struct Solver {
     strategies: Vec<Box<dyn Strategy>>,
