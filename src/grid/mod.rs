@@ -238,18 +238,16 @@ impl Grid {
             return Err(SolverError::Contradiction);
         }
 
-        {
-            // Create new region containing only the given cell
-            let region_id = self.insert_region(Region {
-                state,
-                coords: vec![coord],
-                unknowns: self.valid_unknown_neighbors(coord).collect(),
-            });
+        // Create new region containing only the given cell
+        let mut region_id = self.insert_region(Region {
+            state,
+            coords: vec![coord],
+            unknowns: self.valid_unknown_neighbors(coord).collect(),
+        });
 
-            // Mark the given cell, and link it to the new region
-            self.cell_mut(coord).state = Some(state);
-            self.cell_mut(coord).region = Some(region_id);
-        }
+        // Mark the given cell, and link it to the new region
+        self.cell_mut(coord).state = Some(state);
+        self.cell_mut(coord).region = Some(region_id);
 
         // Update adjacent regions
         for adjacent_coord in self.valid_neighbors(coord) {
@@ -267,7 +265,7 @@ impl Grid {
                     State::Black => state == State::Black,
                 };
                 if is_adjacent_state_equivalent {
-                    self.fuse_regions(adjacent_region_id, self.cell(coord).region.unwrap())?;
+                    region_id = self.fuse_regions(adjacent_region_id, region_id)?;
                 }
             }
         }
@@ -279,11 +277,10 @@ impl Grid {
         &mut self,
         region_id_1: RegionID,
         region_id_2: RegionID,
-    ) -> Result<(), SolverError> {
+    ) -> Result<RegionID, SolverError> {
         // No need to fuse a region to itself
         if region_id_1 == region_id_2 {
-            // TODO: Should this be an error?
-            return Ok(());
+            return Ok(region_id_1);
         }
 
         let region_1 = self.region(region_id_1).unwrap();
@@ -331,7 +328,7 @@ impl Grid {
             self.cell_mut(coord).region = Some(region_id_1);
         }
 
-        Ok(())
+        Ok(region_id_1)
     }
 
     pub(crate) fn is_complete(&self) -> bool {
