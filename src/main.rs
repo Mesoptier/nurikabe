@@ -6,7 +6,7 @@ use nurikabe::{
         dual_liberties::DualLiberties, hypotheticals::Hypotheticals,
         single_liberties::SingleLiberties, unreachable_cells::UnreachableCells,
     },
-    Grid, Solver,
+    DisplayLogger, Grid, Solver,
 };
 
 fn main() {
@@ -66,6 +66,6 @@ fn main() {
     .unwrap();
 
     println!("{}", grid);
-    let solver_result = solver.solve(&mut grid);
+    let solver_result = solver.solve_with_logger(&mut grid, DisplayLogger::new());
     println!("{:?}", solver_result);
 }
