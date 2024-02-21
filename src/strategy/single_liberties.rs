@@ -37,3 +37,26 @@ impl Strategy for SingleLiberties {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::strategy::test_strategy;
+
+    use super::SingleLiberties;
+
+    test_strategy!(test_numbered, SingleLiberties, "3..\nBBB", Some("3W.\nBBB"));
+    test_strategy!(
+        test_numbered_already_complete,
+        SingleLiberties,
+        "2W..\nBBBB",
+        None
+    );
+    test_strategy!(test_white, SingleLiberties, "W..\nBBB", Some("WW.\nBBB"));
+    test_strategy!(test_black, SingleLiberties, "B..\nWWW", Some("BB.\nWWW"));
+    test_strategy!(
+        test_black_already_complete,
+        SingleLiberties,
+        "4.\n.W\nBB",
+        None
+    );
+}
