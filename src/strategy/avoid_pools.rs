@@ -1,4 +1,4 @@
-use crate::{Coord, State};
+use crate::{Coord, SolverError, State};
 
 use super::{MarkSet, Strategy, StrategyResult};
 
@@ -41,6 +41,11 @@ impl Strategy for AvoidPools {
                         } else if grid.is_cell_unreachable(coord_2, [coord_1]) {
                             mark_set.insert(coord_1, State::White);
                         }
+                    }
+                    [(_, Some(State::Black)), (_, Some(State::Black)), (_, Some(State::Black)), (_, Some(State::Black))] =>
+                    {
+                        // Found a 2x2 pool of black cells.
+                        return Err(SolverError::Contradiction);
                     }
                     _ => {}
                 }
