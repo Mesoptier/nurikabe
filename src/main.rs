@@ -21,10 +21,21 @@ fn main() {
 
     // https://www.puzzle-nurikabe.com/
     // 5x5 Nurikabe Hard Puzzle ID: 9,690,008
-    //let mut grid = Grid::from_str("2..1./...../...3./....5/.....").unwrap();
+    //let mut grid = Grid::from_str("2..1.\n.....\n...3.\n....5\n.....\n").unwrap();
 
     // https://en.wikipedia.org/wiki/Nurikabe_(puzzle)
-    let mut grid = Grid::from_str("2........2/......2.../.2..7...../........../......3.3./..2....3../2..4....../........../.1....2.4.").unwrap();
+    let mut grid = Grid::from_str(concat!(
+        "2........2\n",
+        "......2...\n",
+        ".2..7.....\n",
+        "..........\n",
+        "......3.3.\n",
+        "..2....3..\n",
+        "2..4......\n",
+        "..........\n",
+        ".1....2.4.\n",
+    ))
+    .unwrap();
 
     println!("{}", grid);
     solver.solve(&mut grid);
