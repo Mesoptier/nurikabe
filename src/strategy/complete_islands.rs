@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use crate::analysis::is_region_complete;
 use crate::{Coord, Grid, State};
 
 use super::{Strategy, StrategyResult};
@@ -15,10 +16,8 @@ impl Strategy for CompleteIslands {
         let mut mark_as_black = HashSet::<Coord>::new();
 
         for region in grid.regions() {
-            if let State::Numbered(number) = region.state {
-                if number == region.len() {
-                    mark_as_black.extend(region.unknowns.iter());
-                }
+            if region.state.is_numbered() && is_region_complete(grid, region) {
+                mark_as_black.extend(region.unknowns.iter());
             }
         }
 

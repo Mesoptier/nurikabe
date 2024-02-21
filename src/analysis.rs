@@ -1,5 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 
+use crate::grid::Region;
 use crate::{Coord, Grid, RegionID, SolverError, State};
 
 /// Check if a cell is unreachable by a white/numbered region.
@@ -17,7 +18,7 @@ pub fn is_cell_unreachable(
         .regions()
         .filter_map(|region| {
             if let State::Numbered(max_region_len) = region.state {
-                Some(max_region_len - region.len())
+                Some(max_region_len.wrapping_sub(region.len()))
             } else {
                 None
             }
@@ -125,12 +126,7 @@ pub(crate) fn is_region_confined(
             continue;
         }
 
-        let region_needs_more_cells = match region.state {
-            State::Numbered(number) => closed.len() < number,
-            State::White => true,
-            State::Black => closed.len() < grid.total_black_cells,
-        };
-        if !region_needs_more_cells {
+        if !is_region_like_complete(grid, region.state, closed.len()) {
             return Ok(false);
         }
 
@@ -206,10 +202,26 @@ pub(crate) fn is_region_confined(
         }
     }
 
-    let region_needs_more_cells = match region.state {
-        State::Numbered(number) => closed.len() < number,
-        State::White => true,
-        State::Black => closed.len() < grid.total_black_cells,
-    };
-    Ok(region_needs_more_cells)
+    Ok(!is_region_like_complete(grid, region.state, closed.len()))
+}
+
+pub(crate) fn is_region_complete(grid: &Grid, region: &Region) -> bool {
+    is_region_like_complete(grid, region.state, region.len())
+}
+
+pub(crate) fn is_region_like_complete(grid: &Grid, region_state: State, region_len: usize) -> bool {
+    match region_state {
+        State::White => false,
+        State::Black => region_len == grid.total_black_cells,
+        State::Numbered(number) => region_len == number,
+    }
+}
+
+/// Returns `true` if the region is larger than should be possible.
+pub(crate) fn is_region_overfilled(grid: &Grid, region: &Region) -> bool {
+    match region.state {
+        State::White => false,
+        State::Black => region.len() > grid.total_black_cells,
+        State::Numbered(number) => region.len() > number,
+    }
 }
