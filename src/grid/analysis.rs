@@ -19,7 +19,7 @@ impl Grid {
             .regions()
             .filter_map(|region| {
                 if let State::Numbered(max_region_len) = region.state {
-                    Some(max_region_len.wrapping_sub(region.len()))
+                    Some(max_region_len.saturating_sub(region.len()))
                 } else {
                     None
                 }
