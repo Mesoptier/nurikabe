@@ -3,7 +3,6 @@ use strategy::Strategy;
 
 use crate::analysis::{is_region_complete, is_region_overfilled};
 
-pub mod analysis;
 mod grid;
 pub mod strategy;
 
