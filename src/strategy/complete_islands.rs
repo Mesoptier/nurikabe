@@ -1,6 +1,8 @@
-use super::Strategy;
-use crate::{Coord, Grid, State};
 use std::collections::HashSet;
+
+use crate::{Coord, Grid, State};
+
+use super::Strategy;
 
 pub struct CompleteIslands;
 
@@ -30,23 +32,33 @@ impl Strategy for CompleteIslands {
 
 #[cfg(test)]
 mod tests {
+    use crate::strategy::test_strategy;
+
     use super::CompleteIslands;
-    use crate::{strategy::Strategy, test_util::get_regions, Coord, Grid, State};
 
-    #[test]
-    fn complete_islands() {
-        let mut grid = Grid::new(3, 3, vec![(Coord::new(1, 1), 1)]);
+    test_strategy!(
+        complete_1x1_center,
+        CompleteIslands,
+        "...\n.1.\n...",
+        Some(".B.\nB1B\n.B.")
+    );
+    test_strategy!(
+        complete_1x1_edge,
+        CompleteIslands,
+        "...\n1..\n...",
+        Some("B..\n1B.\nB..")
+    );
+    test_strategy!(
+        complete_1x1_corner,
+        CompleteIslands,
+        "1..\n...\n...",
+        Some("1B.\nB..\n...")
+    );
 
-        assert_eq!(CompleteIslands.apply(&mut grid), true);
-        assert_eq!(
-            get_regions(&grid),
-            vec![
-                (State::Numbered(1), vec![Coord::new(1, 1)]),
-                (State::Black, vec![Coord::new(0, 1)]),
-                (State::Black, vec![Coord::new(1, 0)]),
-                (State::Black, vec![Coord::new(1, 2)]),
-                (State::Black, vec![Coord::new(2, 1)]),
-            ]
-        );
-    }
+    test_strategy!(
+        already_complete_1x1_center,
+        CompleteIslands,
+        ".B.\nB1B\n.B.",
+        None
+    );
 }
