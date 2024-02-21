@@ -28,27 +28,22 @@ impl Solver {
         grid: &mut Grid,
         mut logger: impl SolverLogger,
     ) -> Result<(), SolverError> {
-        while !grid.is_complete() {
-            let mut result = false;
-
+        'outer: while !grid.is_complete() {
             logger.before_apply(grid);
 
             for strategy in &self.strategies {
-                result = strategy.apply(grid)?;
-                if result {
+                if strategy.apply(grid)? {
                     logger.strategy_applied(grid, strategy.name());
-                    break;
+                    continue 'outer;
                 }
             }
 
-            if !result {
-                // Detect contradictions before giving up because no strategy applied, so the
-                // Hypotheticals strategy has a chance to work.
-                self.detect_contradictions(grid)?;
+            // Detect contradictions before giving up because no strategy applied, so the
+            // Hypotheticals strategy has a chance to work.
+            self.detect_contradictions(grid)?;
 
-                logger.no_strategy_applies(grid);
-                return Err(SolverError::NoStrategyApplies);
-            }
+            logger.no_strategy_applies(grid);
+            return Err(SolverError::NoStrategyApplies);
         }
 
         self.detect_contradictions(grid)
