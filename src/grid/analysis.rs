@@ -127,7 +127,7 @@ impl Grid {
                 continue;
             }
 
-            if !self.is_region_like_complete(region.state, closed.len()) {
+            if self.is_region_like_complete(region.state, closed.len()) {
                 return Ok(false);
             }
 
