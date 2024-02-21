@@ -67,6 +67,7 @@ impl Grid {
             result.push('\n');
         }
 
+        result.pop(); // Remove the trailing newline
         result
     }
 }
