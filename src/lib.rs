@@ -1,8 +1,6 @@
 pub use grid::*;
 use strategy::Strategy;
 
-use crate::analysis::{is_region_complete, is_region_overfilled};
-
 mod grid;
 pub mod strategy;
 
@@ -52,10 +50,10 @@ impl Solver {
 
     pub fn detect_contradictions(&self, grid: &Grid) -> Result<(), SolverError> {
         for region in grid.regions() {
-            if region.is_closed() && !is_region_complete(grid, region) {
+            if region.is_closed() && !grid.is_region_complete(region) {
                 return Err(SolverError::Contradiction);
             }
-            if is_region_overfilled(grid, region) {
+            if grid.is_region_overfilled(region) {
                 return Err(SolverError::Contradiction);
             }
         }

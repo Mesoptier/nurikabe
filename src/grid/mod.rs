@@ -1,6 +1,6 @@
 use crate::SolverError;
 
-pub mod analysis;
+mod analysis;
 #[cfg(feature = "display")]
 pub mod display;
 pub mod from_str;

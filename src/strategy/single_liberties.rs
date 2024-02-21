@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use crate::analysis::is_region_complete;
 use crate::{Coord, Grid, State};
 
 use super::{Strategy, StrategyResult};
@@ -17,7 +16,7 @@ impl Strategy for SingleLiberties {
         let mut mark_as_white = HashSet::<Coord>::new();
 
         for region in grid.regions() {
-            if !is_region_complete(grid, region) && region.unknowns_len() == 1 {
+            if !grid.is_region_complete(region) && region.unknowns_len() == 1 {
                 let unknown_coord = region.unknowns[0];
                 match region.state {
                     State::White | State::Numbered(_) => mark_as_white.insert(unknown_coord),

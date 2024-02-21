@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use crate::analysis::is_cell_unreachable;
 use crate::{Coord, Grid, State};
 
 use super::{Strategy, StrategyResult};
@@ -18,7 +17,7 @@ impl Strategy for UnreachableCells {
         for col in 0..grid.num_cols {
             for row in 0..grid.num_rows {
                 let coord = Coord::new(row, col);
-                if is_cell_unreachable(grid, coord, mark_as_black.iter().copied()) {
+                if grid.is_cell_unreachable(coord, mark_as_black.iter().copied()) {
                     mark_as_black.insert(coord);
                 }
             }

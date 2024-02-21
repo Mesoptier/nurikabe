@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use crate::analysis::is_region_confined;
 use crate::grid::State;
 use crate::strategy::{Strategy, StrategyResult};
 use crate::Grid;
@@ -20,7 +19,7 @@ impl Strategy for Confinement {
             .filter(|(_, cell)| cell.state.is_none())
             .try_for_each(|(coord, _)| {
                 grid.regions_iter().try_for_each(|(region_id, region)| {
-                    if is_region_confined(grid, region_id, [coord])? {
+                    if grid.is_region_confined(region_id, [coord])? {
                         if region.state.is_black() {
                             mark_as_black.insert(coord);
                         } else {
@@ -50,7 +49,7 @@ impl Strategy for Confinement {
                         .filter(|(other_region_id, _)| *other_region_id != region_id)
                         .filter(|(_, other_region)| other_region.state.is_numbered())
                         .try_for_each(|(other_region_id, _)| {
-                            if is_region_confined(grid, other_region_id, assume_visited.iter().copied())? {
+                            if grid.is_region_confined(other_region_id, assume_visited.iter().copied())? {
                                 mark_as_black.insert(coord);
                             }
                             Ok(())
