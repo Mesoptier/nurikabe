@@ -227,3 +227,22 @@ impl Grid {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::grid::RegionID;
+    use crate::{Coord, Grid};
+
+    #[test]
+    fn test_is_region_confined() {
+        let grid = Grid::from_str("4.\n..").unwrap();
+        let region_id = RegionID(0);
+        assert_eq!(grid.is_region_confined(region_id, []), Ok(false));
+        assert_eq!(
+            grid.is_region_confined(region_id, [Coord::new(0, 1)]),
+            Ok(true)
+        );
+    }
+}

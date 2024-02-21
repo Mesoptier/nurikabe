@@ -4,7 +4,7 @@ use strategy::Strategy;
 mod grid;
 pub mod strategy;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SolverError {
     Contradiction,
     NoStrategyApplies,

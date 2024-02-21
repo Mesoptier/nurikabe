@@ -69,3 +69,16 @@ impl Strategy for Confinement {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Confinement;
+    use crate::strategy::test_strategy;
+
+    test_strategy!(
+        test_confinement_numbered,
+        Confinement,
+        "4.\n..",
+        Some("4W\nWW")
+    );
+}
