@@ -30,3 +30,23 @@ impl Strategy for UnreachableCells {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::strategy::test_strategy;
+
+    use super::UnreachableCells;
+
+    test_strategy!(
+        test_too_far,
+        UnreachableCells,
+        "2.\n..\n..",
+        Some("2.\n.B\nBB")
+    );
+    test_strategy!(
+        test_between_numbered,
+        UnreachableCells,
+        "2.2\n...",
+        Some("2B2\n.B.")
+    );
+}
