@@ -19,7 +19,6 @@ pub(crate) enum State {
     Numbered(usize),
     White,
     Black,
-    Unknown,
 }
 
 impl State {
@@ -32,21 +31,19 @@ impl State {
     pub(crate) fn is_black(self) -> bool {
         matches!(self, Self::Black)
     }
-    pub(crate) fn is_unknown(self) -> bool {
-        matches!(self, Self::Unknown)
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Cell {
-    pub(crate) state: State,
+    // TODO: state.is_some() <=> region.is_some(), so we could use a single Option<StateOrRegion>?
+    pub(crate) state: Option<State>,
     pub(crate) region: Option<RegionID>,
 }
 
 impl Default for Cell {
     fn default() -> Self {
         Self {
-            state: State::Unknown,
+            state: None,
             region: None,
         }
     }
@@ -98,7 +95,7 @@ impl Grid {
                 unknowns: grid.valid_neighbors(coord).collect(),
             });
             *grid.cell_mut(coord) = Cell {
-                state,
+                state: Some(state),
                 region: Some(region_id),
             };
 
@@ -151,7 +148,7 @@ impl Grid {
 
     pub(crate) fn valid_unknown_neighbors(&self, coord: Coord) -> impl Iterator<Item = Coord> + '_ {
         self.valid_neighbors(coord)
-            .filter(move |&coord| self.cell(coord).state == State::Unknown)
+            .filter(move |&coord| self.cell(coord).state == None)
     }
 
     pub(crate) fn cell(&self, coord: Coord) -> &Cell {
@@ -209,7 +206,7 @@ impl Grid {
 
     pub(crate) fn mark_cell(&mut self, coord: Coord, state: State) {
         // TODO: Return Result:Err instead of panicking when contradiction occurs
-        assert_eq!(self.cell(coord).state, State::Unknown);
+        assert_eq!(self.cell(coord).state, None);
 
         {
             // Create new region containing only the given cell
@@ -220,7 +217,7 @@ impl Grid {
             });
 
             // Mark the given cell, and link it to the new region
-            self.cell_mut(coord).state = state;
+            self.cell_mut(coord).state = Some(state);
             self.cell_mut(coord).region = Some(region_id);
         }
 
@@ -236,7 +233,6 @@ impl Grid {
                 // Add cell to adjacent regions with equivalent state, potentially fusing some regions
                 // TODO: Make sure that this equivalence check is correct
                 let is_adjacent_state_equivalent = match adjacent_region.state {
-                    State::Unknown => unreachable!(),
                     State::White | State::Numbered(_) => state == State::White,
                     State::Black => state == State::Black,
                 };

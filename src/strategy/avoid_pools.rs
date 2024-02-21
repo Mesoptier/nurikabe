@@ -25,20 +25,20 @@ impl Strategy for AvoidPools {
                 ]
                 .map(|c| (c, grid.cell(c).state));
 
-                assert!(State::Black < State::Unknown);
+                assert!(Some(State::Black) > None);
                 cells.sort_unstable_by_key(|(_, state)| *state);
 
                 match cells {
                     // With three black cells in a 2x2 square, a remaining unknown cell must be
                     // marked white.
-                    [(_, State::Black), (_, State::Black), (_, State::Black), (coord, State::Unknown)] =>
+                    [(coord, None), (_, Some(State::Black)), (_, Some(State::Black)), (_, Some(State::Black))] =>
                     {
                         mark_as_white.insert(coord);
                     }
                     // With two black cells and two unknown cells in a 2x2 square. If marking one of
                     // the unknown cells black would make the other one unreachable, then it must be
                     // marked white.
-                    [(_, State::Black), (_, State::Black), (coord_1, State::Unknown), (coord_2, State::Unknown)] => {
+                    [(coord_1, None), (coord_2, None), (_, Some(State::Black)), (_, Some(State::Black))] => {
                         if is_cell_unreachable(grid, coord_1, [coord_2]) {
                             mark_as_white.insert(coord_2);
                         } else if is_cell_unreachable(grid, coord_2, [coord_1]) {

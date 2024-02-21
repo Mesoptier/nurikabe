@@ -1,8 +1,9 @@
+use std::collections::HashSet;
+
 use crate::analysis::is_region_confined;
 use crate::grid::State;
 use crate::strategy::Strategy;
 use crate::Grid;
-use std::collections::HashSet;
 
 pub struct Confinement;
 
@@ -16,7 +17,7 @@ impl Strategy for Confinement {
         let mut mark_as_black = HashSet::new();
 
         grid.iter()
-            .filter(|(_, cell)| cell.state.is_unknown())
+            .filter(|(_, cell)| cell.state.is_none())
             .for_each(|(coord, _)| {
                 grid.regions_iter()
                     .filter(|(region_id, _)| is_region_confined(grid, *region_id, [coord]))
@@ -36,10 +37,13 @@ impl Strategy for Confinement {
                     let mut assume_visited = vec![coord];
                     assume_visited.extend(grid.valid_unknown_neighbors(coord));
 
-                    grid.valid_neighbors(coord).map(|coord| grid.cell(coord)).filter(|cell| cell.state.is_white()).for_each(|cell| {
-                        let region = grid.region(cell.region.unwrap()).unwrap();
-                        assume_visited.extend(region.unknowns.iter().copied());
-                    });
+                    grid.valid_neighbors(coord)
+                        .map(|coord| grid.cell(coord))
+                        .filter(|cell| matches!(cell.state, Some(State::White)))
+                        .for_each(|cell| {
+                            let region = grid.region(cell.region.unwrap()).unwrap();
+                            assume_visited.extend(region.unknowns.iter().copied());
+                        });
 
                     grid.regions_iter()
                         .filter(|(other_region_id, _)| *other_region_id != region_id)

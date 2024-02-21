@@ -8,7 +8,7 @@ pub fn is_cell_unreachable(
     coord: Coord,
     assume_black: impl IntoIterator<Item = Coord>,
 ) -> bool {
-    if grid.cell(coord).state != State::Unknown {
+    if grid.cell(coord).state != None {
         return false;
     }
 
@@ -43,7 +43,6 @@ pub fn is_cell_unreachable(
                         adj_white_regions.insert(adj_region_id);
                     }
                     State::Black => {}
-                    State::Unknown => unreachable!(),
                 };
             }
         }
@@ -130,7 +129,6 @@ pub(crate) fn is_region_confined(
             State::Numbered(number) => closed.len() < number,
             State::White => true,
             State::Black => closed.len() < grid.total_black_cells,
-            State::Unknown => unreachable!(),
         };
         if !region_needs_more_cells {
             return false;
@@ -170,7 +168,6 @@ pub(crate) fn is_region_confined(
 
                     // Consume the unknown cell otherwise
                 }
-                Some(State::Unknown) => unreachable!("Unknown region state"),
             },
             State::White => match other_region.map(|region| region.state) {
                 Some(State::Numbered(_)) => {
@@ -184,7 +181,6 @@ pub(crate) fn is_region_confined(
                     // White region cannot consume black regions
                     continue;
                 }
-                Some(State::Unknown) => unreachable!("Unknown region state"),
             },
             State::Black => match other_region.map(|region| region.state) {
                 Some(State::Numbered(_) | State::White) => {
@@ -194,9 +190,7 @@ pub(crate) fn is_region_confined(
                 Some(State::Black) | None => {
                     // Consume the black region / unknown cell
                 }
-                Some(State::Unknown) => unreachable!("Unknown region state"),
             },
-            State::Unknown => unreachable!("Unknown region state"),
         }
 
         // Consume the region/cell
@@ -215,7 +209,6 @@ pub(crate) fn is_region_confined(
         State::Numbered(number) => closed.len() < number,
         State::White => true,
         State::Black => closed.len() < grid.total_black_cells,
-        State::Unknown => unreachable!(),
     };
     region_needs_more_cells
 }

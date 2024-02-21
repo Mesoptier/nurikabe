@@ -30,10 +30,10 @@ impl FromStr for Grid {
                 let coord = Coord::new(row_idx, col_idx);
 
                 match state {
-                    State::Numbered(number) => givens.push((coord, number)),
-                    State::White => mark_as_white.push(coord),
-                    State::Black => mark_as_black.push(coord),
-                    State::Unknown => {}
+                    Some(State::Numbered(number)) => givens.push((coord, number)),
+                    Some(State::White) => mark_as_white.push(coord),
+                    Some(State::Black) => mark_as_black.push(coord),
+                    None => {}
                 }
             }
         }
@@ -58,10 +58,10 @@ impl Grid {
         for row in self.cells.chunks(self.num_cols) {
             for cell in row {
                 match cell.state {
-                    State::Unknown => result.push('.'),
-                    State::White => result.push('W'),
-                    State::Black => result.push('B'),
-                    State::Numbered(n) => result.push_str(n.to_string().as_str()),
+                    None => result.push('.'),
+                    Some(State::White) => result.push('W'),
+                    Some(State::Black) => result.push('B'),
+                    Some(State::Numbered(n)) => result.push_str(n.to_string().as_str()),
                 };
             }
             result.push('\n');
@@ -72,19 +72,19 @@ impl Grid {
     }
 }
 
-fn parse_grid(input: &str) -> IResult<&str, Vec<Vec<State>>> {
+fn parse_grid(input: &str) -> IResult<&str, Vec<Vec<Option<State>>>> {
     separated_list1(line_ending, parse_row)(input)
 }
 
-fn parse_row(input: &str) -> IResult<&str, Vec<State>> {
+fn parse_row(input: &str) -> IResult<&str, Vec<Option<State>>> {
     many1(parse_cell)(input)
 }
 
-fn parse_cell(input: &str) -> IResult<&str, State> {
+fn parse_cell(input: &str) -> IResult<&str, Option<State>> {
     alt((
-        value(State::Unknown, char('.')),
-        value(State::White, char('W')),
-        value(State::Black, char('B')),
-        map(digit1, |s: &str| State::Numbered(s.parse().unwrap())),
+        value(None, char('.')),
+        value(Some(State::White), char('W')),
+        value(Some(State::Black), char('B')),
+        map(digit1, |s: &str| Some(State::Numbered(s.parse().unwrap()))),
     ))(input)
 }

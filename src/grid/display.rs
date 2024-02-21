@@ -15,7 +15,7 @@ impl Display for Grid {
 }
 
 impl Grid {
-    pub(crate) fn diff<'a>(&'a self, prev_states: &'a [State]) -> GridDiff<'a> {
+    pub(crate) fn diff<'a>(&'a self, prev_states: &'a [Option<State>]) -> GridDiff<'a> {
         assert_eq!(prev_states.len(), self.cells.len());
         GridDiff {
             grid: self,
@@ -26,7 +26,7 @@ impl Grid {
 
 pub(crate) struct GridDiff<'a> {
     grid: &'a Grid,
-    prev_states: &'a [State],
+    prev_states: &'a [Option<State>],
 }
 
 impl<'a> Display for GridDiff<'a> {
@@ -40,7 +40,7 @@ impl<'a> Display for GridDiff<'a> {
                     .copied();
 
                 let string = match (state, prev_state) {
-                    (State::Numbered(number), _) => {
+                    (Some(State::Numbered(number)), _) => {
                         format!("{:^3}", number.to_string().black())
                     }
                     (state, Some(prev_state)) if state != prev_state => {
@@ -50,9 +50,11 @@ impl<'a> Display for GridDiff<'a> {
                 };
 
                 match state {
-                    State::Unknown => write!(f, "{}", string.on_white())?,
-                    State::White | State::Numbered(_) => write!(f, "{}", string.on_bright_white())?,
-                    State::Black => write!(f, "{}", string.on_black())?,
+                    None => write!(f, "{}", string.on_white())?,
+                    Some(State::White | State::Numbered(_)) => {
+                        write!(f, "{}", string.on_bright_white())?
+                    }
+                    Some(State::Black) => write!(f, "{}", string.on_black())?,
                 };
             }
 

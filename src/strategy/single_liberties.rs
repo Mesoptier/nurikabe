@@ -15,7 +15,6 @@ impl Strategy for SingleLiberties {
 
         for region in grid.regions() {
             let is_region_complete = match region.state {
-                State::Unknown => unreachable!(),
                 State::White => false,
                 State::Black => region.coords.len() == grid.total_black_cells,
                 State::Numbered(number) => region.coords.len() == number,
@@ -24,7 +23,6 @@ impl Strategy for SingleLiberties {
             if !is_region_complete && region.unknowns.len() == 1 {
                 let unknown_coord = region.unknowns[0];
                 match region.state {
-                    State::Unknown => unreachable!(),
                     State::White | State::Numbered(_) => mark_as_white.insert(unknown_coord),
                     State::Black => mark_as_black.insert(unknown_coord),
                 };
