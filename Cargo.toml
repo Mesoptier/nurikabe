@@ -1,12 +1,5 @@
-[package]
-name = "nurikabe"
-version = "0.1.0"
-edition = "2021"
+[workspace]
 
-[features]
-default = ["display"]
-display = ["colored"]
-
-[dependencies]
-colored = { version = "2", optional = true }
-nom = "7.1.1"
+members = [
+    "solver"
+]
