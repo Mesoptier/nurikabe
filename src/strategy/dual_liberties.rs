@@ -39,3 +39,14 @@ impl Strategy for DualLiberties {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::strategy::test_strategy;
+
+    use super::DualLiberties;
+
+    test_strategy!(test_apply, DualLiberties, "2.\n..", Some("2.\n.B"));
+    test_strategy!(test_already_marked, DualLiberties, "2.\n.B", None);
+    test_strategy!(test_already_completed, DualLiberties, "1.\n.B", None);
+}
