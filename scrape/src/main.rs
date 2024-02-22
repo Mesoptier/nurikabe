@@ -1,10 +1,50 @@
 use scraper::Html;
 
 fn main() {
-    let html = reqwest::blocking::get("https://www.puzzle-nurikabe.com/?v=0&size=6")
-        .unwrap()
-        .text()
-        .unwrap();
+    for _ in 0..10 {
+        scrape_random_puzzle(PuzzleType::Hard15x15);
+    }
+}
+
+enum PuzzleType {
+    Easy5x5,
+    Easy7x7,
+    Easy10x10,
+    Easy12x12,
+    Easy15x15,
+    Easy20x20,
+    Hard5x5,
+    Hard7x7,
+    Hard10x10,
+    Hard12x12,
+    Hard15x15,
+}
+
+impl PuzzleType {
+    fn size_param(&self) -> u32 {
+        match self {
+            PuzzleType::Easy5x5 => 0,
+            PuzzleType::Easy7x7 => 1,
+            PuzzleType::Easy10x10 => 2,
+            PuzzleType::Easy12x12 => 5,
+            PuzzleType::Easy15x15 => 3,
+            PuzzleType::Easy20x20 => 4,
+            PuzzleType::Hard5x5 => 6,
+            PuzzleType::Hard7x7 => 7,
+            PuzzleType::Hard10x10 => 8,
+            PuzzleType::Hard12x12 => 9,
+            PuzzleType::Hard15x15 => 10,
+        }
+    }
+}
+
+fn scrape_random_puzzle(puzzle_type: PuzzleType) {
+    let url = format!(
+        "https://www.puzzle-nurikabe.com/?v=0&size={}",
+        puzzle_type.size_param()
+    );
+
+    let html = reqwest::blocking::get(url).unwrap().text().unwrap();
 
     let document = Html::parse_document(&html);
 
@@ -15,17 +55,25 @@ fn main() {
 
     let puzzle_data = get_puzzle_data(&document);
 
-    let filename = puzzle_info.to_filename();
     let contents = format!(
         "# {}\n# {}\n{}",
         puzzle_info_string, puzzle_copyright, puzzle_data
     );
 
-    std::fs::write(
-        format!("data/puzzles/puzzle-nurikabe-com/{}", filename),
-        contents,
-    )
-    .unwrap();
+    let dir = format!(
+        "data/puzzles/puzzle-nurikabe-com/{}x{}-{}",
+        puzzle_info.num_cols,
+        puzzle_info.num_rows,
+        puzzle_info.difficulty.to_ascii_lowercase()
+    );
+
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(format!("{}/{}.txt", dir, puzzle_info.puzzle_id), contents).unwrap();
+
+    println!(
+        "Scraped puzzle: {}x{}-{} (ID: {})",
+        puzzle_info.num_cols, puzzle_info.num_rows, puzzle_info.difficulty, puzzle_info.puzzle_id
+    );
 }
 
 fn get_puzzle_info(document: &Html) -> String {
@@ -65,22 +113,10 @@ mod parse {
 
     #[derive(Debug)]
     pub(crate) struct PuzzleInfo {
-        num_cols: u32,
-        num_rows: u32,
-        difficulty: String,
-        puzzle_id: u32,
-    }
-
-    impl PuzzleInfo {
-        pub(crate) fn to_filename(&self) -> String {
-            format!(
-                "{}x{}-{}-{}.txt",
-                self.num_cols,
-                self.num_rows,
-                self.difficulty.to_ascii_lowercase(),
-                self.puzzle_id
-            )
-        }
+        pub(crate) num_cols: u32,
+        pub(crate) num_rows: u32,
+        pub(crate) difficulty: String,
+        pub(crate) puzzle_id: u32,
     }
 
     pub(crate) fn parse_puzzle_info(puzzle_info: &str) -> IResult<&str, PuzzleInfo> {

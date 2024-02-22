@@ -67,7 +67,7 @@ fn main() {
     // .unwrap();
 
     let input_string =
-        fs::read_to_string("data/puzzles/puzzle-nurikabe-com/15x15-hard-6545181.txt").unwrap();
+        fs::read_to_string("data/puzzles/puzzle-nurikabe-com/15x15-hard/3079.txt").unwrap();
     let mut grid = Grid::from_str(input_string.as_str()).unwrap();
 
     println!("{}", grid);
